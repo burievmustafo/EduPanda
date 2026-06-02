@@ -1,25 +1,42 @@
 import { ReactNode } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { BRAND } from '@/components/ui-button';
 
 type ScreenProps = {
   children: ReactNode;
   scroll?: boolean;
   /** SafeArea'ni tepadan ham qo'llashmi (header bo'lmagan ekranlar uchun true). */
   edgesTop?: boolean;
+  /** Pull-to-refresh — berilsa, tortib yangilash yoqiladi. */
+  onRefresh?: () => void;
+  refreshing?: boolean;
 };
 
-export function Screen({ children, scroll = true, edgesTop = false }: ScreenProps) {
+export function Screen({
+  children,
+  scroll = true,
+  edgesTop = false,
+  onRefresh,
+  refreshing = false,
+}: ScreenProps) {
   const edges = edgesTop ? (['top', 'left', 'right'] as const) : (['left', 'right', 'bottom'] as const);
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={edges}>
         {scroll ? (
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            refreshControl={
+              onRefresh ? (
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={BRAND} colors={[BRAND]} />
+              ) : undefined
+            }>
             {children}
           </ScrollView>
         ) : (

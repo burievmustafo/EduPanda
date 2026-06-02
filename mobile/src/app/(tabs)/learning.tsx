@@ -1,15 +1,15 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { getStudentDashboard } from '@/api/dashboards';
-import { LoadingState, Screen } from '@/components/screen';
+import { Screen } from '@/components/screen';
+import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRAND } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { useStudentDashboard } from '@/hooks/queries';
 import { useLocale } from '@/hooks/use-locale';
 import { useTheme } from '@/hooks/use-theme';
 import { tText } from '@/lib/localized';
@@ -17,14 +17,13 @@ import { tText } from '@/lib/localized';
 export default function LearningTab() {
   const { t } = useTranslation();
   const locale = useLocale();
-  const [refresh, setRefresh] = useState(0);
-  useFocusEffect(useCallback(() => setRefresh((r) => r + 1), []));
-  const { data, loading } = useAsync(() => getStudentDashboard(), [refresh]);
+  const { data, isLoading, refetch, isRefetching } = useStudentDashboard();
+  useFocusEffect(useCallback(() => void refetch(), [refetch]));
 
   return (
-    <Screen>
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
+    <Screen onRefresh={refetch} refreshing={isRefetching}>
+      {isLoading ? (
+        <ListSkeleton count={2} />
       ) : data ? (
         <>
           <ThemedText type="smallBold" style={styles.heading}>

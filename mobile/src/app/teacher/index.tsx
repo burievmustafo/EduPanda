@@ -1,28 +1,27 @@
 import { Stack, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { getTeacherDashboard } from '@/api/dashboards';
 import { LanguageToggle } from '@/components/language-toggle';
-import { LoadingState, Screen } from '@/components/screen';
+import { Screen } from '@/components/screen';
+import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { useTeacherDashboard } from '@/hooks/queries';
 import { useLocale } from '@/hooks/use-locale';
 import { tText } from '@/lib/localized';
 
 export default function TeacherDashboardScreen() {
   const { t } = useTranslation();
   const locale = useLocale();
-  const [refresh, setRefresh] = useState(0);
-  useFocusEffect(useCallback(() => setRefresh((r) => r + 1), []));
-  const { data, loading } = useAsync(() => getTeacherDashboard(), [refresh]);
+  const { data, isLoading, refetch, isRefetching } = useTeacherDashboard();
+  useFocusEffect(useCallback(() => void refetch(), [refetch]));
 
   return (
-    <Screen>
+    <Screen onRefresh={refetch} refreshing={isRefetching}>
       <Stack.Screen options={{ title: t('role.teacher') }} />
       <View style={styles.header}>
         <ThemedText type="subtitle">{t('dashboard.myCourses')}</ThemedText>
@@ -34,8 +33,8 @@ export default function TeacherDashboardScreen() {
         onPress={() => router.push('/teacher/create-course')}
       />
 
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
+      {isLoading ? (
+        <ListSkeleton count={2} />
       ) : data && data.courses.length > 0 ? (
         data.courses.map((c) => (
           <Pressable

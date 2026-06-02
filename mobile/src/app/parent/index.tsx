@@ -1,29 +1,31 @@
-import { Stack, router } from 'expo-router';
+import { Stack, router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { getParentDashboard } from '@/api/dashboards';
 import { LanguageToggle } from '@/components/language-toggle';
-import { LoadingState, Screen } from '@/components/screen';
+import { Screen } from '@/components/screen';
+import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { useParentDashboard } from '@/hooks/queries';
 
 export default function ParentDashboardScreen() {
   const { t } = useTranslation();
-  const { data, loading } = useAsync(() => getParentDashboard(), []);
+  const { data, isLoading, refetch, isRefetching } = useParentDashboard();
+  useFocusEffect(useCallback(() => void refetch(), [refetch]));
 
   return (
-    <Screen>
+    <Screen onRefresh={refetch} refreshing={isRefetching}>
       <Stack.Screen options={{ title: t('role.parent') }} />
       <View style={styles.header}>
         <ThemedText type="subtitle">{t('dashboard.myChildren')}</ThemedText>
         <LanguageToggle />
       </View>
 
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
+      {isLoading ? (
+        <ListSkeleton count={2} />
       ) : data && data.children.length > 0 ? (
         data.children.map((ch) => (
           <Pressable

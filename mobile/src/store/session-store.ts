@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 
+import { queryClient } from '@/lib/query-client'
 import type { UserRole } from '@/types/dto'
 
 /**
@@ -23,5 +24,9 @@ const DEV_IDS: Record<UserRole, string> = {
 export const useSession = create<SessionState>((set) => ({
 	role: 'student',
 	devClerkId: DEV_IDS.student,
-	setRole: (role) => set({ role, devClerkId: DEV_IDS[role] }),
+	setRole: (role) => {
+		set({ role, devClerkId: DEV_IDS[role] })
+		// Yangi identity — eski keshni tozalaymiz.
+		queryClient.clear()
+	},
 }))

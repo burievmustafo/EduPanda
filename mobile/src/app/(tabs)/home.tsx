@@ -1,33 +1,32 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { getCourses } from '@/api/learning';
-import { LoadingState, Screen } from '@/components/screen';
+import { Screen } from '@/components/screen';
+import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { useCourses } from '@/hooks/queries';
 import { useLocale } from '@/hooks/use-locale';
 import { tText } from '@/lib/localized';
 import type { CourseDTO } from '@/types/dto';
 
 export default function HomeTab() {
   const { t } = useTranslation();
-  const [refresh, setRefresh] = useState(0);
-  useFocusEffect(useCallback(() => setRefresh((r) => r + 1), []));
-  const { data: courses, loading } = useAsync(() => getCourses(), [refresh]);
+  const { data: courses, isLoading, refetch, isRefetching } = useCourses();
+  useFocusEffect(useCallback(() => void refetch(), [refetch]));
 
   return (
-    <Screen>
+    <Screen onRefresh={refetch} refreshing={isRefetching}>
       <ThemedText type="subtitle">{t('home.greeting')} 👋</ThemedText>
       <ThemedText type="smallBold" style={styles.section}>
         {t('home.allCourses')}
       </ThemedText>
 
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
+      {isLoading ? (
+        <ListSkeleton />
       ) : courses && courses.length > 0 ? (
         courses.map((c) => <CourseCard key={c.id} course={c} />)
       ) : (

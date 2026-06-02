@@ -1,14 +1,15 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { getChildProgress } from '@/api/dashboards';
-import { LoadingState, Screen } from '@/components/screen';
+import { Screen } from '@/components/screen';
+import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRAND } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { useChildProgress } from '@/hooks/queries';
 import { useLocale } from '@/hooks/use-locale';
 import { useTheme } from '@/hooks/use-theme';
 import { tText } from '@/lib/localized';
@@ -17,14 +18,15 @@ export default function ChildProgressScreen() {
   const { studentId } = useLocalSearchParams<{ studentId: string }>();
   const { t } = useTranslation();
   const locale = useLocale();
-  const { data, loading } = useAsync(() => getChildProgress(studentId), [studentId]);
+  const { data, isLoading, refetch, isRefetching } = useChildProgress(studentId);
+  useFocusEffect(useCallback(() => void refetch(), [refetch]));
 
   return (
-    <Screen>
+    <Screen onRefresh={refetch} refreshing={isRefetching}>
       <Stack.Screen options={{ title: t('dashboard.progress') }} />
 
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
+      {isLoading ? (
+        <ListSkeleton count={2} />
       ) : data ? (
         <>
           <ThemedText type="smallBold" style={styles.heading}>
