@@ -35,3 +35,5 @@ async function request<T>(
 export const apiGet = <T>(path: string) => request<T>(path)
 export const apiPost = <T>(path: string, body?: unknown) =>
 	request<T>(path, { method: 'POST', body })
+export const apiPatch = <T>(path: string, body?: unknown) =>
+	request<T>(path, { method: 'PATCH', body })
