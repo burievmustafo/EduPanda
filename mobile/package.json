@@ -11,9 +11,11 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@clerk/clerk-expo": "^2.19.31",
     "expo": "~54.0.0",
     "expo-localization": "~17.0.9",
     "expo-router": "~6.0.24",
+    "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-video": "~3.0.16",
     "i18next": "^23.16.8",

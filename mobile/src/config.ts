@@ -17,3 +17,8 @@ export const API_URL =
  */
 export const DEV_CLERK_ID =
 	process.env.EXPO_PUBLIC_DEV_CLERK_ID ?? 'seed_student_edupanda'
+
+/** Clerk publishable key — web bilan bir xil instance. */
+export const CLERK_PUBLISHABLE_KEY =
+	process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ??
+	'pk_test_YWJzb2x1dGUtamF5LTgyLmNsZXJrLmFjY291bnRzLmRldiQ'

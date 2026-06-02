@@ -1,4 +1,5 @@
 import { API_URL } from '@/config'
+import { getAuthToken } from '@/lib/auth-token'
 import { useSession } from '@/store/session-store'
 
 /**
@@ -11,12 +12,17 @@ async function request<T>(
 	path: string,
 	options?: { method?: string; body?: unknown }
 ): Promise<T> {
+	// Real Clerk token bo'lsa — Bearer; bo'lmasa dev-header (login qilinmagan demo holati).
+	const token = await getAuthToken()
+	const authHeaders: Record<string, string> = token
+		? { Authorization: `Bearer ${token}` }
+		: { 'x-dev-clerk-id': useSession.getState().devClerkId }
+
 	const res = await fetch(`${API_URL}${path}`, {
 		method: options?.method ?? 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			// Tanlangan role'ga mos seed user (M3 bosqich 1).
-			'x-dev-clerk-id': useSession.getState().devClerkId,
+			...authHeaders,
 		},
 		body: options?.body ? JSON.stringify(options.body) : undefined,
 	})
@@ -35,3 +41,5 @@ async function request<T>(
 export const apiGet = <T>(path: string) => request<T>(path)
 export const apiPost = <T>(path: string, body?: unknown) =>
 	request<T>(path, { method: 'POST', body })
+export const apiPatch = <T>(path: string, body?: unknown) =>
+	request<T>(path, { method: 'PATCH', body })

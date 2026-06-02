@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs'
+import { auth, currentUser } from '@clerk/nextjs'
 import { NextResponse } from 'next/server'
 import User from '@/database/user.model'
 import { connectToDatabase } from '@/lib/mongoose'
@@ -40,6 +40,8 @@ export async function requireUser(req: Request) {
 	} catch {
 		clerkId = null
 	}
+	const isRealAuth = Boolean(clerkId)
+
 	if (!clerkId && process.env.NODE_ENV !== 'production') {
 		clerkId = req.headers.get('x-dev-clerk-id')
 	}
@@ -47,7 +49,23 @@ export async function requireUser(req: Request) {
 		throw new ApiError(401, 'unauthorized', 'Authentication required')
 	}
 
-	const user = await User.findOne({ clerkId })
+	let user = await User.findOne({ clerkId })
+
+	// Create-on-first-request: real Clerk user birinchi marta kirsa, DB'da yaratamiz.
+	if (!user && isRealAuth) {
+		const cu = await currentUser()
+		if (cu) {
+			user = await User.create({
+				clerkId,
+				email: cu.emailAddresses?.[0]?.emailAddress,
+				fullName:
+					[cu.firstName, cu.lastName].filter(Boolean).join(' ').trim() || 'User',
+				picture: cu.imageUrl,
+				role: (cu.publicMetadata?.role as string) || 'student',
+			})
+		}
+	}
+
 	if (!user) {
 		throw new ApiError(401, 'user_not_found', 'User not found')
 	}

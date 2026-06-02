@@ -80,6 +80,20 @@ const en = {
     noData: 'No data yet',
     lessons: 'lessons',
   },
+  auth: {
+    welcome: 'Welcome to EduPanda',
+    signIn: 'Sign in',
+    signUp: 'Sign up',
+    email: 'Email',
+    password: 'Password',
+    haveAccount: 'Already have an account?',
+    noAccount: "Don't have an account?",
+    verifyTitle: 'Verify your email',
+    verifyHint: 'Enter the code we sent to your email',
+    code: 'Verification code',
+    verify: 'Verify',
+    signOut: 'Sign out',
+  },
 };
 
 export default en;

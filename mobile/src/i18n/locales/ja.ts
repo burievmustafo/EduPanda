@@ -82,6 +82,20 @@ const ja: TranslationSchema = {
     noData: 'データがありません',
     lessons: 'レッスン',
   },
+  auth: {
+    welcome: 'EduPandaへようこそ',
+    signIn: 'ログイン',
+    signUp: '新規登録',
+    email: 'メールアドレス',
+    password: 'パスワード',
+    haveAccount: 'すでにアカウントをお持ちですか？',
+    noAccount: 'アカウントをお持ちでないですか？',
+    verifyTitle: 'メールを確認',
+    verifyHint: 'メールに送られたコードを入力してください',
+    code: '確認コード',
+    verify: '確認',
+    signOut: 'ログアウト',
+  },
 };
 
 export default ja;
