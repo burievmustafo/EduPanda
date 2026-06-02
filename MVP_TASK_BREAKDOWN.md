@@ -16,7 +16,13 @@
   - Role tanlash → Home → Course → Learning (video + timed savol) → Section test → Natija.
   - EN/JA real-time almashtirish, watched-ranges progress, server-side baholash.
   - Demo: `cd mobile && npx expo start`.
-- **Keyingi:** Milestone 2 — Backend schema + `/api/mobile/*` (real DB).
+- **Milestone 2 — Backend (DB + API):** ✅ tugadi va haqiqiy MongoDB'da test qilindi.
+  - 7 yangi model + mavjudlarga additive i18n maydonlar (web buzilmadi).
+  - Seed: `npx ts-node --transpile-only scripts/seed-edupanda.ts`.
+  - 13 endpoint `app/[lng]/api/mobile/*` — auth (Clerk Bearer + dev header), en/ja, server baholash.
+  - 🔒 `correctOptionId` mijozga sizmaydi. Teacher/Parent natija ko'radi.
+  - DNS fix (`lib/mongoose.ts`) — Atlas SRV uchun.
+- **Keyingi:** Milestone 3 — Mobile mock'dan real API'ga ulash (`mobile/src/api/learning.ts`).
 
 > Eslatma: styling — Expo template theme + StyleSheet (NativeWind emas, SDK 54 mosligi sababli).
 > Clerk va React Query M3'ga qoldirildi (mock demoga kerak emas).

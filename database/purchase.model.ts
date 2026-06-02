@@ -4,6 +4,11 @@ const PurchaseSchema = new Schema(
 	{
 		user: { type: Schema.Types.ObjectId, ref: 'User' },
 		course: { type: Schema.Types.ObjectId, ref: 'Course' },
+		source: {
+			type: String,
+			enum: ['purchase', 'mock', 'admin'],
+			default: 'purchase',
+		},
 	},
 	{ timestamps: true }
 )

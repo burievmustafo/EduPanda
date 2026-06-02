@@ -21,6 +21,8 @@ export default authMiddleware({
 		'/:lng/sign-in',
 		'/:lng/sign-up',
 		'/:lng/ai',
+		// Mobil API: Clerk bloklamasin (auth qo'lda — Bearer token route ichida tekshiriladi)
+		'/:lng/api/mobile/(.*)',
 	],
 	ignoredRoutes: ['/en/api/webhook'],
 })

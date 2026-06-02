@@ -6,6 +6,11 @@ const CourseSchema = new Schema(
 		description: String,
 		learning: String,
 		requirements: String,
+		// Mobil uchun ikki tilli (additive — web eski String maydonlarni ishlatadi)
+		titleI18n: { en: String, ja: String },
+		descriptionI18n: { en: String, ja: String },
+		learningI18n: { en: String, ja: String },
+		requirementsI18n: { en: String, ja: String },
 		level: String,
 		category: String,
 		language: String,
