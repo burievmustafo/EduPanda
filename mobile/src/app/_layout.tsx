@@ -17,6 +17,9 @@ export default function RootLayout() {
           <Stack.Screen name="course/[courseId]" options={{ title: '' }} />
           <Stack.Screen name="learn/[lessonId]" options={{ title: '' }} />
           <Stack.Screen name="quiz/[sectionId]" options={{ title: '' }} />
+          <Stack.Screen name="teacher/index" options={{ title: 'EduPanda' }} />
+          <Stack.Screen name="parent/index" options={{ title: 'EduPanda' }} />
+          <Stack.Screen name="parent/[studentId]" options={{ title: '' }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>

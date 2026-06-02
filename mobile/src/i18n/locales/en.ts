@@ -65,6 +65,21 @@ const en = {
     correctAnswer: 'Correct answer',
     startQuiz: 'Start quiz',
   },
+  dashboard: {
+    myCourses: 'My courses',
+    students: 'students',
+    attempts: 'attempts',
+    avgScore: 'Avg score',
+    published: 'Published',
+    draft: 'Draft',
+    myChildren: 'My children',
+    completedLessons: 'completed',
+    viewProgress: 'View progress',
+    recentResults: 'Recent results',
+    progress: 'Progress',
+    noData: 'No data yet',
+    lessons: 'lessons',
+  },
 };
 
 export default en;

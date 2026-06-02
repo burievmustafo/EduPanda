@@ -67,6 +67,21 @@ const ja: TranslationSchema = {
     correctAnswer: '正解',
     startQuiz: 'テストを開始',
   },
+  dashboard: {
+    myCourses: 'マイコース',
+    students: '生徒',
+    attempts: '受験回数',
+    avgScore: '平均点',
+    published: '公開中',
+    draft: '下書き',
+    myChildren: '子供たち',
+    completedLessons: '完了',
+    viewProgress: '進捗を見る',
+    recentResults: '最近の結果',
+    progress: '進捗',
+    noData: 'データがありません',
+    lessons: 'レッスン',
+  },
 };
 
 export default ja;

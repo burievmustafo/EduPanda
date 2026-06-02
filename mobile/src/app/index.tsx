@@ -7,9 +7,11 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui-button';
 import { LanguageToggle } from '@/components/language-toggle';
 import { Spacing } from '@/constants/theme';
+import { useSession } from '@/store/session-store';
 
 export default function RoleSelectScreen() {
   const { t } = useTranslation();
+  const setRole = useSession((s) => s.setRole);
 
   return (
     <Screen edgesTop>
@@ -25,16 +27,28 @@ export default function RoleSelectScreen() {
         </ThemedText>
 
         <View style={styles.buttons}>
-          <Button title={t('role.student')} onPress={() => router.push('/home')} />
           <Button
-            title={`${t('role.teacher')} · ${t('role.comingSoon')}`}
-            variant="secondary"
-            disabled
+            title={t('role.student')}
+            onPress={() => {
+              setRole('student');
+              router.push('/home');
+            }}
           />
           <Button
-            title={`${t('role.parent')} · ${t('role.comingSoon')}`}
+            title={t('role.teacher')}
             variant="secondary"
-            disabled
+            onPress={() => {
+              setRole('teacher');
+              router.push('/teacher');
+            }}
+          />
+          <Button
+            title={t('role.parent')}
+            variant="secondary"
+            onPress={() => {
+              setRole('parent');
+              router.push('/parent');
+            }}
           />
         </View>
       </View>
