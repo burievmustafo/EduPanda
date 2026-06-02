@@ -8,7 +8,15 @@ import { getAdminInstructors } from '@/actions/user.action'
 
 async function Page() {
 	const courses = await getFeaturedCourses()
-	const instructorData = await getAdminInstructors({ pageSize: 4 })
+	let instructors: Awaited<ReturnType<typeof getAdminInstructors>>['instructors'] =
+		[]
+
+	try {
+		const instructorData = await getAdminInstructors({ pageSize: 4 })
+		instructors = instructorData.instructors
+	} catch {
+		instructors = []
+	}
 
 	return (
 		<>
@@ -16,7 +24,7 @@ async function Page() {
 			<FeaturedCourses courses={JSON.parse(JSON.stringify(courses))} />
 			<Categories />
 			<Instructor
-				instructors={JSON.parse(JSON.stringify(instructorData.instructors))}
+				instructors={JSON.parse(JSON.stringify(instructors))}
 			/>
 			<LearningJourney />
 		</>

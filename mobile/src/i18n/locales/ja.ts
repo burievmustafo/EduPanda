@@ -1,0 +1,72 @@
+import type { TranslationSchema } from './en';
+
+const ja: TranslationSchema = {
+  common: {
+    appName: 'EduPanda',
+    continue: '続ける',
+    skip: 'スキップ',
+    submit: '送信',
+    next: '次へ',
+    previous: '前へ',
+    back: '戻る',
+    loading: '読み込み中…',
+    retry: '再試行',
+    language: '言語',
+    minutes: '分',
+  },
+  role: {
+    chooseRole: '役割を選択',
+    subtitle: 'このデモでは、EduPandaをどの立場で体験するか選んでください。',
+    student: '生徒',
+    teacher: '先生',
+    parent: '保護者',
+    comingSoon: '近日公開',
+  },
+  home: {
+    greeting: 'おかえりなさい',
+    continueLearning: '学習を続ける',
+    allCourses: 'すべてのコース',
+    noCourses: 'まだコースがありません',
+  },
+  course: {
+    enroll: '登録する',
+    enrolled: '登録済み',
+    lessons: 'レッスン',
+    sections: 'セクション',
+    startLearning: '学習を始める',
+    sectionQuiz: 'セクションテスト',
+    aboutCourse: 'このコースについて',
+    free: '無料',
+  },
+  lesson: {
+    transcript: '字幕',
+    nextLesson: '次のレッスン',
+    completed: '完了',
+    watched: '視聴済み',
+  },
+  question: {
+    title: 'クイック質問',
+    correct: '正解！',
+    incorrect: '惜しい',
+    explanation: '解説',
+    continueVideo: '動画を続ける',
+  },
+  quiz: {
+    title: '最終テスト',
+    question: '問題',
+    of: '/',
+    submitTest: 'テストを提出',
+    result: '結果',
+    score: 'スコア',
+    correctAnswers: '正解数',
+    passed: '合格',
+    failed: '不合格',
+    reviewAnswers: '解答を確認',
+    backToCourse: 'コースに戻る',
+    yourAnswer: 'あなたの解答',
+    correctAnswer: '正解',
+    startQuiz: 'テストを開始',
+  },
+};
+
+export default ja;

@@ -107,25 +107,25 @@ function Item({ item }: Props) {
 				{item.role}
 			</TableCell>
 			<TableCell className='text-xs'>{item.email}</TableCell>
-			<TableCell
-				className='cursor-pointer text-xs text-primary hover:underline'
-				onClick={() => window.open(item.website, '_blank')}
-			>
-				{item.website.replace(/^https?:\/\//, '')}
-			</TableCell>
-			<TableCell
-				className='cursor-pointer text-xs text-primary hover:underline'
-				onClick={() => window.open(item.youtube, '_blank')}
-			>
-				{item.youtube.replace(/^https?:\/\//, '')}
-			</TableCell>
-			<TableCell
-				className='cursor-pointer text-xs text-primary hover:underline'
-				onClick={() => window.open(item.github, '_blank')}
-			>
-				{item.github.replace(/^https?:\/\//, '')}
-			</TableCell>
-			<TableCell className='text-xs'>{item.job}</TableCell>
+<TableCell
+			className='cursor-pointer text-xs text-primary hover:underline'
+			onClick={() => item.website && window.open(item.website, '_blank')}
+		>
+			{item.website?.replace(/^https?:\/\//, '') || '-'}
+		</TableCell>
+		<TableCell
+			className='cursor-pointer text-xs text-primary hover:underline'
+			onClick={() => item.youtube && window.open(item.youtube, '_blank')}
+		>
+			{item.youtube?.replace(/^https?:\/\//, '') || '-'}
+		</TableCell>
+		<TableCell
+			className='cursor-pointer text-xs text-primary hover:underline'
+			onClick={() => item.github && window.open(item.github, '_blank')}
+		>
+			{item.github?.replace(/^https?:\/\//, '') || '-'}
+		</TableCell>
+		<TableCell className='text-xs'>{item.job || '-'}</TableCell>
 			<TableCell className='text-right'>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>

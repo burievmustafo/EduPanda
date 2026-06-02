@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Jumboq O'yini{% endblock %}</title>
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: rgba(255, 255, 255, 0.95);
+            --text-primary: #333;
+            --text-secondary: #666;
+            --card-bg: white;
+            --border-color: #e6e8f0;
+            --accent: #667eea;
+            --shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.08);
+            --shadow-md: 0 8px 20px rgba(16, 24, 40, 0.12);
+            --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.16);
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-secondary: rgba(22, 24, 40, 0.95);
+            --text-primary: #f0f0f0;
+            --text-secondary: #aaa;
+            --card-bg: #1f2235;
+            --border-color: #2c324a;
+            --accent: #8fa2ff;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+            --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background: var(--bg-secondary);
+            padding: 14px 26px;
+            border-radius: 14px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar-logo {
+            color: var(--accent);
+            font-size: 22px;
+            letter-spacing: 0.2px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        
+        [data-theme="dark"] .navbar-logo {
+            color: #a0b4ff;
+        }
+        
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .navbar-links > a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .navbar-links > a:hover {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .score-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: relative;
+        }
+        
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+        
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .profile-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .dropdown-arrow {
+            transition: transform 0.3s;
+        }
+        
+        .profile-dropdown.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            min-width: 250px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .profile-dropdown.active .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .dropdown-header .avatar-large {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            margin: 0 auto 10px;
+        }
+        
+        .dropdown-header .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        
+        .dropdown-header .user-email {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .dropdown-section {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .dropdown-section:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-section-title {
+            padding: 8px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            font-size: 14px;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .dropdown-item .icon {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+        }
+        
+        .theme-toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #667eea;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        /* Language Selector */
+        .language-options {
+            display: flex;
+            gap: 5px;
+            padding: 5px 20px 10px;
+        }
+        
+        .lang-btn {
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            color: var(--text-primary);
+        }
+        
+        .lang-btn:hover, .lang-btn.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* Logout Button */
+        .logout-btn {
+            color: #dc3545 !important;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 0.1) !important;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .messages {
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .story-banner {
+            background: rgba(102, 126, 234, 0.12);
+            border: 1px dashed rgba(102, 126, 234, 0.35);
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .story-banner {
+            background: rgba(143, 162, 255, 0.12);
+            border-color: rgba(143, 162, 255, 0.35);
+        }
+        
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .room-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .room-card:hover:not(.locked) {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .room-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .room-card.locked::before {
+            content: '🔒';
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+        }
+        
+        .room-card h3 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        
+        [data-theme="dark"] .room-card h3 {
+            color: #a0b4ff;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-card h3 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .badge-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .badge-card[data-tone="accent"] .badge-icon {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .badge-card[data-tone="success"] .badge-icon {
+            background: rgba(40, 167, 69, 0.15);
+        }
+
+        .badge-card[data-tone="gold"] .badge-icon {
+            background: rgba(255, 193, 7, 0.2);
+        }
+
+        .badge-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .badge-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="{% url 'dashboard' %}" class="navbar-logo">🧩 Jumboq O'yini</a>
+            <div class="navbar-links">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'home' %}">👤 <span data-translate="my_page">My Page</span></a>
+                    <div class="user-info">
+                        <span class="score-badge">⭐ {{ user.statistics.total_score|default:0 }} <span data-translate="points">ball</span></span>
+                        
+                        <!-- Profile Dropdown -->
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="profile-btn" onclick="toggleDropdown()">
+                                {% if user_profile and user_profile.avatar %}
+                                    <img class="profile-avatar" src="{{ user_profile.avatar.url }}" alt="avatar">
+                                {% else %}
+                                    <div class="profile-avatar">{{ user.username|slice:":1"|upper }}</div>
+                                {% endif %}
+                               
+                            </div>
+                            
+                            <div class="dropdown-menu">
+                                <div class="dropdown-header">
+                                    {% if user_profile and user_profile.avatar %}
+                                        <img class="avatar-large" src="{{ user_profile.avatar.url }}" alt="avatar">
+                                    {% else %}
+                                        <div class="avatar-large">{{ user.username|slice:":1"|upper }}</div>
+                                    {% endif %}
+                                    <div class="user-name">{{ user.username }}</div>
+                                    <div class="user-email">{{ user.email|default:"O'yinchi" }}</div>
+                                </div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-title" data-translate="my_page">My Page</div>
+                                    <a href="{% url 'my_page' %}" class="dropdown-item" style="text-decoration: none; color: inherit;">
+                                        <span class="icon">👤</span>
+                                        <span data-translate="my_page">My Page</span>
+                                    </a>
+                                </div>
+
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-title" data-translate="appearance">Ko'rinish</div>
+                                    <div class="theme-toggle">
+                                        <div class="theme-toggle-label">
+                                            <span class="icon">🌙</span>
+                                            <span data-translate="dark_mode">Qorong'i rejim</span>
+                                        </div>
+                                        <div class="toggle-switch" id="themeToggle" onclick="toggleTheme()"></div>
+                                    </div>
+                                    <div class="theme-toggle">
+                                        <div class="theme-toggle-label">
+                                            <span class="icon">🔊</span>
+                                            <span data-translate="sound">Ovoz</span>
+                                        </div>
+                                        <div class="toggle-switch" id="soundToggle" onclick="toggleSound()"></div>
+                                    </div>
+                                    <a href="{% url 'settings' %}" class="dropdown-item" style="text-decoration: none; color: inherit;">
+                                        <span class="icon">⚙️</span>
+                                        <span data-translate="settings">Settings</span>
+                                    </a>
+                                </div>
+                                
+                                <div class="dropdown-section">
+                                    <div class="dropdown-section-title" data-translate="language">Til</div>
+                                    <div class="language-options">
+                                        <button class="lang-btn active" data-lang="uz" onclick="setLanguage('uz')">🇺🇿</button>
+                                        <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">🇬🇧</button>
+                                        <button class="lang-btn" data-lang="ja" onclick="setLanguage('ja')">🇯🇵</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="dropdown-section">
+                                    <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item logout-btn">
+                                            <span class="icon">🚪</span>
+                                            <span data-translate="logout">Chiqish</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" data-translate="login">Kirish</a>
+                    <a href="{% url 'register' %}" data-translate="register">Ro'yxatdan o'tish</a>
+                {% endif %}
+            </div>
+        </nav>
+        
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script>
+        // Translations
+        const translations = {
+            uz: {
+                home: "Bosh sahifa",
+                dashboard: "Dashboard",
+                my_page: "My Page",
+                profile: "Profil",
+                statistics: "Statistika",
+                dashboard: "Dashboard",
+                points: "ball",
+                appearance: "Ko'rinish",
+                dark_mode: "Qorong'i rejim",
+                sound: "Ovoz",
+                language: "Til",
+                logout: "Chiqish",
+                login: "Kirish",
+                register: "Ro'yxatdan o'tish",
+                settings: "Sozlamalar",
+                player_label: "O'yinchi",
+                user_info: "Foydalanuvchi ma'lumotlari",
+                email: "Email",
+                avatar: "Avatar",
+                upload_avatar: "Rasm yuklash",
+                upload_hint: "JPG/PNG yuklang",
+                remove_avatar: "Rasmni o'chirish",
+                change_password: "Parolni o'zgartirish",
+                current_password: "Joriy parol",
+                new_password: "Yangi parol",
+                confirm_password: "Yangi parol (takror)",
+                save: "Saqlash",
+                // Home page
+                welcome: "Xush kelibsiz",
+                total_score: "Jami ball",
+                completed_rooms: "Tugallangan xonalar",
+                completed_puzzles: "Tugallangan jumboqlar",
+                total_time: "Jami vaqt (soniya)",
+                rooms: "Xonalar",
+                puzzles_completed: "jumboq tugallangan",
+                view: "Ko'rish",
+                enter_room: "Xonaga kirish",
+                locked: "Qulflangan",
+                no_rooms: "Hozircha xonalar mavjud emas. Admin panel orqali xona qo'shing.",
+                achievements: "Yutuqlar",
+                no_badges: "Hozircha yutuqlar yo'q.",
+                daily_challenge: "Kunlik jumboq",
+                play_now: "Hozir o'ynash",
+                completed: "Tugallangan",
+                email: "Email",
+                joined: "Qo'shilgan sana",
+                // Room page
+                puzzles: "Jumboqlar",
+                back_home: "Bosh sahifaga",
+                puzzle_list: "Jumboqlar ro'yxati",
+                solved: "Yechilgan",
+                not_solved: "Yechilmagan",
+                solve: "Yechish",
+                // Puzzle page
+                hint: "Maslahat",
+                your_answer: "Javobingiz",
+                submit: "Yuborish",
+                correct: "To'g'ri!",
+                wrong: "Noto'g'ri, qaytadan urinib ko'ring",
+                try_again: "Qayta urinish",
+                start: "Boshlash",
+                no_puzzles: "Bu xonada jumboqlar mavjud emas.",
+                back_to_room: "Xonaga qaytish",
+                attempts: "urinish",
+                puzzle_completed: "Bu jumboq tugallangan!",
+                time: "Vaqt",
+                question: "Savol",
+                enter_answer: "Javobingizni kiriting...",
+                submit_answer: "Javobni yuborish",
+                show_hint: "Maslahatni ko'rsatish",
+                tokens_left: "Tokenlar",
+                mission: "Vazifa",
+                puzzle_type_math: "Matematika",
+                puzzle_type_logic: "Mantiqiy",
+                puzzle_type_word: "So'z",
+                puzzle_type_memory: "Xotira",
+                puzzle_type_pattern: "Naqsh",
+                // Statistics page
+                current_room: "Joriy xona:",
+                all_rooms_completed: "Barcha xonalar tugallandi!",
+                room_statistics: "Xonalar bo'yicha statistika",
+                no_statistics: "Hozircha statistika mavjud emas.",
+                recent_completed: "Oxirgi tugallangan jumboqlar",
+                leaderboard: "Leaderboard",
+                no_leaderboard: "Hozircha leaderboard yo'q.",
+                players: "O'yinchilar",
+                weekly_activity: "Haftalik Faoliyat",
+                monthly_statistics: "Oylik Statistika",
+                completed_tasks: "Tugallangan Vazifalar",
+                top_players: "Top O'yinchilar",
+                recent_activity: "So'nggi Faoliyat",
+                active_rooms: "Faol xonalar",
+                last_7_days: "So'nggi 7 kun",
+                last_7_weeks: "So'nggi 7 hafta",
+                by_rooms: "Xonalar bo'yicha",
+                total_solutions: "Jami yechimlar",
+                active_players: "faol o'yinchi",
+                no_activity: "Faoliyat yo'q",
+                no_data: "Hozircha ma'lumot yo'q",
+                this_month: "bu oy",
+                yesterday: "kecha",
+                updated: "Yangilandi",
+                player_col: "O'YINCHI",
+                points_col: "BALLAR",
+                puzzles_col: "JUMBOQLAR",
+                progress_col: "PROGRESS",
+                unit_ta: "ta",
+                unit_s: "s",
+                increase: "o'sish",
+                your_rank: "Sizning o'rningiz",
+                you: "siz"
+            },
+            en: {
+                home: "Home",
+                dashboard: "Dashboard",
+                my_page: "My Page",
+                profile: "Profile",
+                statistics: "Statistics",
+                dashboard: "Dashboard",
+                points: "points",
+                appearance: "Appearance",
+                dark_mode: "Dark mode",
+                sound: "Sound",
+                language: "Language",
+                logout: "Logout",
+                login: "Login",
+                register: "Register",
+                settings: "Settings",
+                player_label: "Player",
+                user_info: "User information",
+                email: "Email",
+                avatar: "Avatar",
+                upload_avatar: "Upload avatar",
+                upload_hint: "Upload JPG/PNG",
+                remove_avatar: "Remove avatar",
+                change_password: "Change password",
+                current_password: "Current password",
+                new_password: "New password",
+                confirm_password: "Confirm password",
+                save: "Save",
+                // Home page
+                welcome: "Welcome",
+                total_score: "Total Score",
+                completed_rooms: "Completed Rooms",
+                completed_puzzles: "Completed Puzzles",
+                total_time: "Total Time (seconds)",
+                rooms: "Rooms",
+                puzzles_completed: "puzzles completed",
+                view: "View",
+                enter_room: "Enter Room",
+                locked: "Locked",
+                no_rooms: "No rooms available yet. Add rooms through admin panel.",
+                achievements: "Achievements",
+                no_badges: "No achievements yet.",
+                daily_challenge: "Daily Challenge",
+                play_now: "Play Now",
+                completed: "Completed",
+                email: "Email",
+                joined: "Joined",
+                // Room page
+                puzzles: "Puzzles",
+                back_home: "Back to Home",
+                puzzle_list: "Puzzle List",
+                solved: "Solved",
+                not_solved: "Not Solved",
+                solve: "Solve",
+                // Puzzle page
+                hint: "Hint",
+                your_answer: "Your Answer",
+                submit: "Submit",
+                correct: "Correct!",
+                wrong: "Wrong, try again",
+                try_again: "Try Again",
+                start: "Start",
+                no_puzzles: "No puzzles in this room.",
+                back_to_room: "Back to Room",
+                attempts: "attempts",
+                puzzle_completed: "This puzzle is completed!",
+                time: "Time",
+                question: "Question",
+                enter_answer: "Enter your answer...",
+                submit_answer: "Submit Answer",
+                show_hint: "Show Hint",
+                tokens_left: "Tokens",
+                mission: "Mission",
+                puzzle_type_math: "Math",
+                puzzle_type_logic: "Logic",
+                puzzle_type_word: "Word",
+                puzzle_type_memory: "Memory",
+                puzzle_type_pattern: "Pattern",
+                // Statistics page
+                current_room: "Current Room:",
+                all_rooms_completed: "All rooms completed!",
+                room_statistics: "Room Statistics",
+                no_statistics: "No statistics available yet.",
+                recent_completed: "Recently Completed Puzzles",
+                leaderboard: "Leaderboard",
+                no_leaderboard: "No leaderboard yet.",
+                players: "Players",
+                weekly_activity: "Weekly Activity",
+                monthly_statistics: "Monthly Statistics",
+                completed_tasks: "Completed Tasks",
+                top_players: "Top Players",
+                recent_activity: "Recent Activity",
+                active_rooms: "Active rooms",
+                last_7_days: "Last 7 days",
+                last_7_weeks: "Last 7 weeks",
+                by_rooms: "By rooms",
+                total_solutions: "Total solutions",
+                active_players: "active players",
+                no_activity: "No activity",
+                no_data: "No data available yet",
+                this_month: "this month",
+                yesterday: "yesterday",
+                updated: "Updated",
+                player_col: "PLAYER",
+                points_col: "POINTS",
+                puzzles_col: "PUZZLES",
+                progress_col: "PROGRESS",
+                unit_ta: "",
+                unit_s: "s",
+                increase: "increase",
+                your_rank: "Your rank",
+                you: "you"
+            },
+            ja: {
+                home: "ホーム",
+                dashboard: "ダッシュボード",
+                my_page: "マイページ",
+                profile: "プロフィール",
+                statistics: "統計",
+                dashboard: "ダッシュボード",
+                points: "ポイント",
+                appearance: "外観",
+                dark_mode: "ダークモード",
+                sound: "サウンド",
+                language: "言語",
+                logout: "ログアウト",
+                login: "ログイン",
+                register: "登録",
+                settings: "設定",
+                player_label: "プレイヤー",
+                user_info: "ユーザー情報",
+                email: "メール",
+                avatar: "アバター",
+                upload_avatar: "画像をアップロード",
+                upload_hint: "JPG/PNG をアップロード",
+                remove_avatar: "画像を削除",
+                change_password: "パスワード変更",
+                current_password: "現在のパスワード",
+                new_password: "新しいパスワード",
+                confirm_password: "新しいパスワード（確認）",
+                save: "保存",
+                // Home page
+                welcome: "ようこそ",
+                total_score: "合計スコア",
+                completed_rooms: "クリアした部屋",
+                completed_puzzles: "解いたパズル",
+                total_time: "合計時間（秒）",
+                rooms: "部屋",
+                puzzles_completed: "パズル完了",
+                view: "見る",
+                enter_room: "部屋に入る",
+                locked: "ロック中",
+                no_rooms: "まだ部屋がありません。管理画面から追加してください。",
+                achievements: "実績",
+                no_badges: "まだ実績がありません。",
+                daily_challenge: "今日のパズル",
+                play_now: "今すぐプレイ",
+                completed: "完了",
+                email: "メール",
+                joined: "参加日",
+                // Room page
+                puzzles: "パズル",
+                back_home: "ホームへ戻る",
+                puzzle_list: "パズル一覧",
+                solved: "解決済み",
+                not_solved: "未解決",
+                solve: "解く",
+                // Puzzle page
+                hint: "ヒント",
+                your_answer: "あなたの答え",
+                submit: "送信",
+                correct: "正解！",
+                wrong: "不正解、もう一度試してください",
+                try_again: "再挑戦",
+                start: "開始",
+                no_puzzles: "この部屋にはパズルがありません。",
+                back_to_room: "部屋に戻る",
+                attempts: "回の試行",
+                puzzle_completed: "このパズルは完了しました！",
+                time: "時間",
+                question: "問題",
+                enter_answer: "答えを入力してください...",
+                submit_answer: "答えを送信",
+                show_hint: "ヒントを表示",
+                tokens_left: "トークン",
+                mission: "ミッション",
+                puzzle_type_math: "数学",
+                puzzle_type_logic: "論理",
+                puzzle_type_word: "言葉",
+                puzzle_type_memory: "記憶",
+                puzzle_type_pattern: "パターン",
+                // Statistics page
+                current_room: "現在の部屋：",
+                all_rooms_completed: "すべての部屋が完了しました！",
+                room_statistics: "部屋別統計",
+                no_statistics: "まだ統計がありません。",
+                recent_completed: "最近完了したパズル",
+                leaderboard: "ランキング",
+                no_leaderboard: "まだランキングがありません。",
+                players: "プレイヤー",
+                weekly_activity: "週次活動",
+                monthly_statistics: "月次統計",
+                completed_tasks: "完了したタスク",
+                top_players: "トッププレイヤー",
+                recent_activity: "最近の活動",
+                active_rooms: "アクティブな部屋",
+                last_7_days: "過去7日間",
+                last_7_weeks: "過去7週間",
+                by_rooms: "部屋別",
+                total_solutions: "合計解決数",
+                active_players: "アクティブなプレイヤー",
+                no_activity: "活動なし",
+                no_data: "まだデータがありません",
+                this_month: "今月",
+                yesterday: "昨日",
+                updated: "更新済み",
+                player_col: "プレイヤー",
+                points_col: "ポイント",
+                puzzles_col: "パズル",
+                progress_col: "進捗",
+                unit_ta: "",
+                unit_s: "秒",
+                increase: "増加",
+                your_rank: "あなたの順位",
+                you: "あなた"
+            }
+        };
+        
+        // Toggle dropdown
+        function toggleDropdown() {
+            document.getElementById('profileDropdown').classList.toggle('active');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+        
+        // Theme toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const currentTheme = html.getAttribute('data-theme');
+            
+            if (currentTheme === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                toggle.classList.remove('active');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                toggle.classList.add('active');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Sound toggle
+        let soundEnabled = true;
+        let audioContext = null;
+
+        function toggleSound() {
+            const toggle = document.getElementById('soundToggle');
+            soundEnabled = !soundEnabled;
+            if (toggle) {
+                toggle.classList.toggle('active', soundEnabled);
+            }
+            localStorage.setItem('sound', soundEnabled ? 'on' : 'off');
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = type === 'success' ? 660 : 220;
+                gainNode.gain.value = 0.06;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.15);
+            } catch (e) {
+                // Audio konteksti bloklangan bo'lishi mumkin
+            }
+        }
+        
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const toggle = document.getElementById('themeToggle');
+            const soundToggle = document.getElementById('soundToggle');
+            
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'dark' && toggle) {
+                toggle.classList.add('active');
+            }
+
+            const savedSound = localStorage.getItem('sound') || 'on';
+            soundEnabled = savedSound === 'on';
+            if (soundToggle) {
+                soundToggle.classList.toggle('active', soundEnabled);
+            }
+            
+            // Load saved language
+            const savedLang = localStorage.getItem('language') || 'uz';
+            setLanguage(savedLang, false);
+        });
+        
+        // Language switcher
+        function setLanguage(lang, save = true) {
+            const elements = document.querySelectorAll('[data-translate]');
+            const placeholders = document.querySelectorAll('[data-placeholder-translate]');
+            const langBtns = document.querySelectorAll('.lang-btn');
+            
+            // UI tarjimalarini yangilash
+            elements.forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Placeholder tarjimalari
+            placeholders.forEach(el => {
+                const key = el.getAttribute('data-placeholder-translate');
+                if (translations[lang] && translations[lang][key]) {
+                    el.placeholder = translations[lang][key];
+                }
+            });
+            
+            // Tugmalarni yangilash
+            langBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            if (save) {
+                localStorage.setItem('language', lang);
+                
+                // Backend ga tilni yuborish va sahifani yangilash
+                fetch('/set-language/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ language: lang })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Sahifani yangilash (DB dan tarjima olish uchun)
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error('Language switch error:', err));
+            }
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

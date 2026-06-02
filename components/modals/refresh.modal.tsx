@@ -5,14 +5,30 @@ import { Dialog, DialogContent } from '../ui/dialog'
 import { Loader2 } from 'lucide-react'
 import Countdown, { zeroPad } from 'react-countdown'
 
+const MAX_REFRESH_RELOADS = 1
+
 function RefreshModal() {
-	const { isOpen } = useRefresh()
+	const { isOpen, onClose } = useRefresh()
 
 	const renderer = ({ seconds }: { seconds: number }) => (
 		<span className='text-center font-space-grotesk text-5xl font-bold'>
 			{zeroPad(seconds)}
 		</span>
 	)
+
+	const handleComplete = () => {
+		if (typeof window === 'undefined') return
+		const key = 'refresh-modal-reloads'
+		const current = Number(sessionStorage.getItem(key) || '0')
+
+		if (current < MAX_REFRESH_RELOADS) {
+			sessionStorage.setItem(key, String(current + 1))
+			window.location.reload()
+			return
+		}
+
+		onClose()
+	}
 
 	return (
 		<Dialog open={isOpen}>
@@ -27,7 +43,7 @@ function RefreshModal() {
 				<Countdown
 					date={Date.now() + 8000}
 					renderer={renderer}
-					onComplete={() => location.reload()}
+					onComplete={handleComplete}
 				/>
 			</DialogContent>
 		</Dialog>

@@ -1,6 +1,6 @@
 'use client'
 
-import { SignOutButton } from '@clerk/nextjs'
+import { SignOutButton, useUser as useClerkUser } from '@clerk/nextjs'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,20 +8,27 @@ import {
 	DropdownMenuSeparator,
 } from '../ui/dropdown-menu'
 import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu'
-import { Avatar, AvatarImage } from '../ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import Link from 'next/link'
 import useTranslate from '@/hooks/use-translate'
 import useUser from '@/hooks/use-user'
 
 function UserBox() {
 	const { user } = useUser()
+	const { user: clerkUser } = useClerkUser()
 	const t = useTranslate()
+	
+	// Clerk'dan rasmni olish (har doim yangi)
+	const profileImage = clerkUser?.imageUrl || user?.picture
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Avatar className='size-10 cursor-pointer'>
-					<AvatarImage src={user?.picture} className='object-cover' />
+					<AvatarImage src={profileImage} className='object-cover' />
+					<AvatarFallback className='bg-primary text-primary-foreground'>
+						{user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+					</AvatarFallback>
 				</Avatar>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
@@ -30,23 +37,21 @@ function UserBox() {
 				alignOffset={11}
 				forceMount
 			>
-				<div className='flex flex-col space-y-4 p-2'>
-					<p className='text-xs font-medium leading-none text-muted-foreground'>
-						{user?.email}
-					</p>
+				<div className='flex items-center gap-x-3 p-2'>
+					<Avatar className='size-12'>
+						<AvatarImage src={profileImage} className='object-cover' />
+						<AvatarFallback className='bg-primary text-primary-foreground'>
+							{user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
+						</AvatarFallback>
+					</Avatar>
 
-					<div className='flex items-center gap-x-2'>
-						<div className='rounded-md bg-secondary p-1'>
-							<Avatar className='size-8'>
-								<AvatarImage src={user?.picture} />
-							</Avatar>
-						</div>
-
-						<div className='space-y-1'>
-							<p className='line-clamp-1 font-space-grotesk text-sm'>
-								{user?.fullName}
-							</p>
-						</div>
+					<div className='flex flex-col'>
+						<p className='font-semibold text-sm'>
+							{user?.fullName || clerkUser?.fullName || 'User'}
+						</p>
+						<p className='text-xs text-muted-foreground'>
+							{user?.email || clerkUser?.primaryEmailAddress?.emailAddress}
+						</p>
 					</div>
 				</div>
 

@@ -53,12 +53,26 @@ export const getUserById = cache(async (clerkId: string) => {
 	}
 })
 
-export const getUser = async (clerkId: string) => {
+export const getUser = async (clerkId: string, clerkUserData?: { fullName?: string; email?: string; picture?: string }) => {
 	try {
 		await connectToDatabase()
-		const user = await User.findOne({ clerkId }).select(
-			'fullName picture clerkId email role isAdmin'
+		let user = await User.findOne({ clerkId }).select(
+			'fullName picture clerkId email role isAdmin approvedInstructor'
 		)
+		
+		// User topilmasa va Clerk ma'lumotlari berilgan bo'lsa, avtomatik yaratamiz
+		if (!user && clerkUserData) {
+			user = await User.create({
+				clerkId,
+				fullName: clerkUserData.fullName || 'User',
+				email: clerkUserData.email || '',
+				picture: clerkUserData.picture || '',
+				role: 'user',
+				isAdmin: false,
+				approvedInstructor: false,
+			})
+		}
+		
 		if (!user) return 'notFound'
 		return JSON.parse(JSON.stringify(user))
 	} catch (error) {

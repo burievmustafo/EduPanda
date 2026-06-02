@@ -29,6 +29,10 @@ export const getCustomer = async (clerkId: string) => {
 	try {
 		await connectToDatabase()
 		const user = await User.findOne({ clerkId }).select('customerId')
+
+		// User MongoDB'da topilmasa, null qaytaramiz
+		if (!user) return null
+
 		const { _id, customerId } = user
 
 		if (!customerId) return await createCustomer(_id)
@@ -71,6 +75,9 @@ export const getCustomerCards = async (clerkId: string) => {
 		await connectToDatabase()
 		const customer = await getCustomer(clerkId)
 
+		// Customer topilmasa, bo'sh array qaytaramiz
+		if (!customer) return []
+
 		const paymentMethods = await stripe.paymentMethods.list({
 			customer: customer.id,
 			type: 'card',
@@ -79,8 +86,8 @@ export const getCustomerCards = async (clerkId: string) => {
 
 		return paymentMethods.data
 	} catch (error) {
-		const result = error as Error
-		throw new Error(result.message)
+		console.error('getCustomerCards error:', error)
+		return []
 	}
 }
 

@@ -36,8 +36,14 @@ export const getBlogs = async () => {
 		}
 	`
 
-	const { blogs } = await request<{ blogs: IBlog[] }>(graphqlAPI, query)
-	return blogs
+	try {
+		const { blogs } = await request<{ blogs: IBlog[] }>(graphqlAPI, query)
+		return blogs
+	} catch (error) {
+		// HyGraph'da Blog modeli yo'q bo'lsa, bo'sh array qaytaradi
+		console.error('Blog fetch error:', error)
+		return []
+	}
 }
 
 export const getDetailedBlog = cache(async (slug: string) => {
@@ -73,6 +79,11 @@ export const getDetailedBlog = cache(async (slug: string) => {
 		}
 	`
 
-	const { blog } = await request<{ blog: IBlog }>(graphqlAPI, query, { slug })
-	return blog
+	try {
+		const { blog } = await request<{ blog: IBlog }>(graphqlAPI, query, { slug })
+		return blog
+	} catch (error) {
+		console.error('Blog detail fetch error:', error)
+		return null
+	}
 })

@@ -130,7 +130,8 @@ export const getFeaturedCourses = cache(async () => {
 
 		return courses
 	} catch (error) {
-		throw new Error('Something went wrong while getting featured courses!')
+		console.error('getFeaturedCourses error:', error)
+		return []
 	}
 })
 
@@ -437,6 +438,11 @@ export const getStudentCourse = async (clerkId: string) => {
 		await connectToDatabase()
 		const user = await User.findOne({ clerkId }).select('_id')
 
+		// User MongoDB'da topilmasa, bo'sh natija qaytaramiz
+		if (!user) {
+			return { allCourses: [], expenses: 0 }
+		}
+
 		const purchasedCourses = await Purchase.find({ user: user._id }).populate({
 			path: 'course',
 			model: Course,
@@ -458,7 +464,8 @@ export const getStudentCourse = async (clerkId: string) => {
 
 		return { allCourses, expenses }
 	} catch (error) {
-		throw new Error('Something went wrong while getting student courses!')
+		console.error('getStudentCourse error:', error)
+		return { allCourses: [], expenses: 0 }
 	}
 }
 
