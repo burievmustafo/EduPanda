@@ -109,6 +109,16 @@ const en = {
     noSections: 'No sections yet',
     required: 'English title is required',
   },
+  tabs: {
+    home: 'Home',
+    learning: 'Learning',
+    profile: 'Profile',
+  },
+  profile: {
+    role: 'Role',
+    switchRole: 'Switch role',
+    about: 'EduPanda — Learning platform',
+  },
 };
 
 export default en;

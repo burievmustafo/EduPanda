@@ -13,7 +13,7 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="home" options={{ title: 'EduPanda' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="course/[courseId]" options={{ title: '' }} />
           <Stack.Screen name="learn/[lessonId]" options={{ title: '' }} />
           <Stack.Screen name="quiz/[sectionId]" options={{ title: '' }} />

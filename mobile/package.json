@@ -11,6 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
     "expo": "~54.0.0",
     "expo-localization": "~17.0.9",
     "expo-router": "~6.0.24",

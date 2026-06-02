@@ -111,6 +111,16 @@ const ja: TranslationSchema = {
     noSections: 'セクションがありません',
     required: '英語タイトルは必須です',
   },
+  tabs: {
+    home: 'ホーム',
+    learning: '学習',
+    profile: 'プロフィール',
+  },
+  profile: {
+    role: '役割',
+    switchRole: '役割を変更',
+    about: 'EduPanda — 学習プラットフォーム',
+  },
 };
 
 export default ja;
