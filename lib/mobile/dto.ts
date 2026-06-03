@@ -80,7 +80,12 @@ export function toTimedQuestionDTO(tq: any) {
 	}
 }
 
-export function toLessonDetailDTO(lesson: any, timedQuestions: any[], progress?: any) {
+export function toLessonDetailDTO(
+	lesson: any,
+	timedQuestions: any[],
+	progress?: any,
+	answeredQuestionIds: string[] = []
+) {
 	return {
 		id: String(lesson._id),
 		sectionId: String(lesson.section),
@@ -93,6 +98,7 @@ export function toLessonDetailDTO(lesson: any, timedQuestions: any[], progress?:
 		timedQuestions: timedQuestions
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
 			.map(toTimedQuestionDTO),
+		answeredQuestionIds,
 		progress: progress
 			? {
 					lastPositionSec: progress.lastPositionSec || 0,

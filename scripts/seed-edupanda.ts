@@ -30,8 +30,7 @@ import SectionQuiz from '../database/section-quiz.model'
 import QuizQuestion from '../database/quiz-question.model'
 import ParentStudentLink from '../database/parent-student-link.model'
 
-const BBB =
-	'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+const DEMO_VIDEO = 'https://www.youtube.com/watch?v=DPe_srf0GlI'
 const SLUG = 'edupanda-demo-web-basics'
 
 async function upsertUser(
@@ -146,8 +145,8 @@ async function seed() {
 			en: 'HTML is the language used to structure content on the web.',
 			ja: 'HTMLはウェブ上のコンテンツを構造化するための言語です。',
 		},
-		videoUrl: BBB,
-		durationSec: 596,
+		videoUrl: DEMO_VIDEO,
+		durationSec: 600,
 		free: true,
 		position: 1,
 		section: section._id,
@@ -160,8 +159,8 @@ async function seed() {
 			en: 'CSS is used to style and lay out web pages.',
 			ja: 'CSSはウェブページのスタイルとレイアウトに使われます。',
 		},
-		videoUrl: BBB,
-		durationSec: 596,
+		videoUrl: DEMO_VIDEO,
+		durationSec: 600,
 		free: false,
 		position: 2,
 		section: section._id,

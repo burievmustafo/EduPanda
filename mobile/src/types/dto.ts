@@ -72,6 +72,7 @@ export type LessonDetailDTO = {
   durationSec: number;
   free: boolean;
   timedQuestions: TimedQuestionDTO[];
+  answeredQuestionIds?: string[];
   progress?: { lastPositionSec: number; watchedPercent: number; isCompleted: boolean };
 };
 

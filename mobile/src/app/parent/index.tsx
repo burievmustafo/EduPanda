@@ -8,6 +8,7 @@ import { Screen } from '@/components/screen';
 import { ListSkeleton } from '@/components/skeleton';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
 import { useParentDashboard } from '@/hooks/queries';
 
@@ -23,6 +24,8 @@ export default function ParentDashboardScreen() {
         <ThemedText type="subtitle">{t('dashboard.myChildren')}</ThemedText>
         <LanguageToggle />
       </View>
+
+      <Button title={`+ ${t('profile.addChild')}`} onPress={() => router.push('/parent/add-child')} />
 
       {isLoading ? (
         <ListSkeleton count={2} />

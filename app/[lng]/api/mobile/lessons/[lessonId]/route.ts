@@ -4,6 +4,7 @@ import { hasLessonAccess } from '@/lib/mobile/access'
 import Lesson from '@/database/lesson.model'
 import Section from '@/database/section.model'
 import TimedQuestion from '@/database/timed-question.model'
+import TimedQuestionAnswer from '@/database/timed-question-answer.model'
 import LessonProgress from '@/database/lesson-progress.model'
 
 export async function GET(
@@ -31,11 +32,18 @@ export async function GET(
 			student: user._id,
 			lesson: (lesson as any)._id,
 		}).lean()
+		const answers = await TimedQuestionAnswer.find({
+			student: user._id,
+			lesson: (lesson as any)._id,
+		})
+			.select('question')
+			.lean()
 
 		const dto = toLessonDetailDTO(
 			{ ...(lesson as any), courseId: (section as any)?.course },
 			timedQuestions,
-			progress
+			progress,
+			answers.map((a: any) => String(a.question))
 		)
 		return ok(dto)
 	} catch (e) {

@@ -70,6 +70,9 @@ export default function CourseBuilderScreen() {
       <Stack.Screen options={{ title: tText(course.title, locale) }} />
 
       <ThemedText style={styles.title}>{tText(course.title, locale)}</ThemedText>
+      <ThemedText type="small" style={styles.muted}>
+        {t('teacherCreate.selectLessonForQuestions')}
+      </ThemedText>
       <Button
         title={t('teacherCreate.publish')}
         variant="secondary"
@@ -83,9 +86,22 @@ export default function CourseBuilderScreen() {
 
           {section.lessons.length > 0 ? (
             section.lessons.map((l) => (
-              <ThemedText key={l.id} type="small" style={styles.lesson}>
-                ▶️ {tText(l.title, locale)} · {formatTime(l.durationSec)}
-              </ThemedText>
+              <Pressable
+                key={l.id}
+                onPress={() =>
+                  router.push({
+                    pathname: '/teacher/lesson/[lessonId]/questions',
+                    params: { lessonId: l.id },
+                  })
+                }
+                style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
+                <ThemedText type="small" style={styles.lesson}>
+                  ▶️ {tText(l.title, locale)} · {formatTime(l.durationSec)}
+                </ThemedText>
+                <ThemedText type="small" style={styles.lessonAction}>
+                  + {t('teacherCreate.buildTimedQuestions')}
+                </ThemedText>
+              </Pressable>
             ))
           ) : (
             <ThemedText type="small" style={styles.muted}>
@@ -132,6 +148,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700' },
   section: { borderRadius: 14, padding: Spacing.three, gap: Spacing.one },
   lesson: { opacity: 0.9 },
+  lessonAction: { color: BRAND, fontWeight: '700', marginBottom: Spacing.one },
   muted: { opacity: 0.6 },
   sectionActions: { flexDirection: 'row', gap: Spacing.four, marginTop: Spacing.two },
   link: { color: BRAND, fontWeight: '700' },

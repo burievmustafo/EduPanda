@@ -60,7 +60,7 @@ export default function CourseDetailScreen() {
 
       <View style={[styles.banner, { backgroundColor: colorFor(course.category) }]}>
         <ThemedText style={styles.bannerCat}>
-          {course.category} · {course.level}
+          {course.category} - {course.level}
         </ThemedText>
         <ThemedText style={styles.bannerTitle}>{tText(course.title, locale)}</ThemedText>
         <ThemedText style={styles.bannerMeta}>{course.instructor.fullName}</ThemedText>
@@ -70,7 +70,7 @@ export default function CourseDetailScreen() {
 
       {course.isEnrolled ? (
         <ThemedText type="smallBold" style={styles.enrolled}>
-          ✅ {t('course.enrolled')}
+          {t('course.enrolled')}
         </ThemedText>
       ) : (
         <Button title={t('course.enroll')} onPress={onEnroll} loading={enrolling} />
@@ -87,6 +87,8 @@ function SectionBlock({ section, enrolled }: { section: SectionDTO; enrolled: bo
   const { t } = useTranslation();
   const locale = useLocale();
   const theme = useTheme();
+  const quizUnlocked =
+    section.lessons.length > 0 && section.lessons.every((lesson) => lesson.progress?.isCompleted);
 
   return (
     <ThemedView type="backgroundElement" style={styles.section}>
@@ -98,13 +100,19 @@ function SectionBlock({ section, enrolled }: { section: SectionDTO; enrolled: bo
 
       {section.hasQuiz ? (
         <Pressable
+          disabled={!quizUnlocked}
           onPress={() =>
             router.push({ pathname: '/quiz/[sectionId]', params: { sectionId: section.id } })
           }
-          style={[styles.quizRow, { borderColor: theme.backgroundSelected }]}>
+          style={[styles.quizRow, { borderColor: theme.backgroundSelected, opacity: quizUnlocked ? 1 : 0.55 }]}>
           <ThemedText type="smallBold" style={styles.quizText}>
-            📝 {t('course.sectionQuiz')}
+            {quizUnlocked ? 'Quiz' : 'Locked'} - {t('course.sectionQuiz')}
           </ThemedText>
+          {!quizUnlocked ? (
+            <ThemedText type="small" style={styles.muted}>
+              {t('lesson.completeToUnlockQuiz')}
+            </ThemedText>
+          ) : null}
         </Pressable>
       ) : null}
     </ThemedView>
@@ -115,8 +123,7 @@ function LessonRow({ lesson, enrolled }: { lesson: LessonListItemDTO; enrolled: 
   const { t } = useTranslation();
   const locale = useLocale();
   const locked = !lesson.free && !enrolled;
-
-  const icon = locked ? '🔒 ' : lesson.progress?.isCompleted ? '✅ ' : '▶️ ';
+  const icon = locked ? 'Locked - ' : lesson.progress?.isCompleted ? 'Done - ' : 'Video - ';
 
   return (
     <Pressable
@@ -130,8 +137,8 @@ function LessonRow({ lesson, enrolled }: { lesson: LessonListItemDTO; enrolled: 
         </ThemedText>
         <ThemedText type="small" style={styles.muted}>
           {formatTime(lesson.durationSec)}
-          {lesson.free ? ` · ${t('course.free')}` : ''}
-          {lesson.progress ? ` · ${lesson.progress.watchedPercent}% ${t('lesson.watched')}` : ''}
+          {lesson.free ? ` - ${t('course.free')}` : ''}
+          {lesson.progress ? ` - ${lesson.progress.watchedPercent}% ${t('lesson.watched')}` : ''}
         </ThemedText>
       </View>
     </Pressable>
@@ -140,14 +147,24 @@ function LessonRow({ lesson, enrolled }: { lesson: LessonListItemDTO; enrolled: 
 
 const styles = StyleSheet.create({
   banner: { borderRadius: 16, padding: Spacing.four, gap: 2 },
-  bannerCat: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  bannerCat: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   bannerTitle: { color: '#ffffff', fontSize: 24, fontWeight: '800', lineHeight: 30 },
   bannerMeta: { color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
   desc: { marginTop: Spacing.one },
   enrolled: { color: '#16a34a' },
   muted: { opacity: 0.7 },
   section: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
-  lessonRow: { paddingVertical: Spacing.two, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(128,128,128,0.25)' },
+  lessonRow: {
+    paddingVertical: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(128,128,128,0.25)',
+  },
   lessonLeft: { gap: 2 },
   quizRow: { marginTop: Spacing.one, borderWidth: 1, borderRadius: 12, padding: Spacing.three, alignItems: 'center' },
   quizText: { color: '#208AEF' },

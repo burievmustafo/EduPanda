@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { getMe } from '@/api/me';
+import { createStudentInviteCode, getMe } from '@/api/me';
 import { LoadingState, Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -16,6 +17,8 @@ export default function ProfileTab() {
   const { t } = useTranslation();
   const role = useSession((s) => s.role);
   const { data: me, loading } = useAsync(() => getMe(), [role]);
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   const roleLabel =
     me?.role === 'teacher'
@@ -46,6 +49,30 @@ export default function ProfileTab() {
           </View>
         </ThemedView>
       )}
+
+      {me?.role === 'student' ? (
+        <ThemedView type="backgroundElement" style={styles.inviteCard}>
+          <ThemedText type="smallBold">{t('profile.inviteCode')}</ThemedText>
+          <ThemedText type="small" style={styles.muted}>
+            {t('profile.shareCode')}
+          </ThemedText>
+          {inviteCode ? <ThemedText style={styles.code}>{inviteCode}</ThemedText> : null}
+          <Button
+            title={t('profile.generateInviteCode')}
+            variant="secondary"
+            loading={inviteLoading}
+            onPress={async () => {
+              setInviteLoading(true);
+              try {
+                const res = await createStudentInviteCode();
+                setInviteCode(res.code);
+              } finally {
+                setInviteLoading(false);
+              }
+            }}
+          />
+        </ThemedView>
+      ) : null}
 
       <Button
         title={t('profile.switchRole')}
@@ -82,4 +109,6 @@ const styles = StyleSheet.create({
   },
   roleText: { color: BRAND, textTransform: 'uppercase', letterSpacing: 0.5 },
   about: { opacity: 0.5, textAlign: 'center', marginTop: Spacing.four },
+  inviteCard: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
+  code: { fontSize: 34, fontWeight: '800', color: BRAND, letterSpacing: 4, textAlign: 'center' },
 });

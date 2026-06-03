@@ -11,7 +11,7 @@ import { BRAND, Button } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
 
 const SAMPLE_VIDEO =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  'https://www.youtube.com/watch?v=DPe_srf0GlI';
 
 export default function AddLessonScreen() {
   const { sectionId } = useLocalSearchParams<{ sectionId: string }>();
@@ -20,12 +20,12 @@ export default function AddLessonScreen() {
   const [titleEn, setTitleEn] = useState('');
   const [titleJa, setTitleJa] = useState('');
   const [videoUrl, setVideoUrl] = useState(SAMPLE_VIDEO);
-  const [duration, setDuration] = useState('596');
+  const [duration, setDuration] = useState('600');
   const [free, setFree] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const onSave = async () => {
+  const saveLesson = async (goToQuestions: boolean) => {
     if (!titleEn.trim()) {
       setError(t('teacherCreate.required'));
       return;
@@ -33,13 +33,20 @@ export default function AddLessonScreen() {
     setLoading(true);
     setError('');
     try {
-      await createLesson(sectionId, {
+      const res = await createLesson(sectionId, {
         titleI18n: { en: titleEn.trim(), ja: titleJa.trim() || undefined },
         videoUrl: videoUrl.trim(),
         durationSec: Number(duration) || 0,
         free,
       });
-      router.back();
+      if (goToQuestions) {
+        router.replace({
+          pathname: '/teacher/lesson/[lessonId]/questions',
+          params: { lessonId: res.id },
+        });
+      } else {
+        router.back();
+      }
     } catch (e: any) {
       setError(e?.message ?? 'Failed');
     } finally {
@@ -77,7 +84,13 @@ export default function AddLessonScreen() {
         </ThemedText>
       ) : null}
 
-      <Button title={t('teacherCreate.save')} onPress={onSave} loading={loading} />
+      <Button title={t('teacherCreate.saveOnly')} onPress={() => saveLesson(false)} loading={loading} />
+      <Button
+        title={t('teacherCreate.saveAndAddQuestions')}
+        variant="secondary"
+        onPress={() => saveLesson(true)}
+        loading={loading}
+      />
     </Screen>
   );
 }
