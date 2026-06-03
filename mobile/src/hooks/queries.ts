@@ -32,7 +32,8 @@ export const useLesson = (lessonId: string) =>
 export const useSectionQuiz = (sectionId: string) =>
   useQuery({ queryKey: ['quiz', sectionId], queryFn: () => getSectionQuiz(sectionId) });
 
-export const useMe = () => useQuery({ queryKey: ['me'], queryFn: getMe });
+export const useMe = () =>
+  useQuery({ queryKey: ['me'], queryFn: getMe, staleTime: 60_000 });
 
 /* ------------------------------- Dashboards -------------------------------- */
 

@@ -21,13 +21,16 @@ export default function RootLayout() {
             <Stack.Screen name="course/[courseId]" options={{ title: '' }} />
             <Stack.Screen name="learn/[lessonId]" options={{ title: '' }} />
             <Stack.Screen name="quiz/[sectionId]" options={{ title: '' }} />
+            <Stack.Screen name="settings" options={{ title: 'Settings', presentation: 'modal' }} />
             <Stack.Screen name="teacher/index" options={{ title: 'EduPanda' }} />
             <Stack.Screen name="teacher/create-course" options={{ title: '' }} />
             <Stack.Screen name="teacher/course/[courseId]" options={{ title: '' }} />
             <Stack.Screen name="teacher/section/[sectionId]/add-lesson" options={{ title: '' }} />
             <Stack.Screen name="teacher/quiz/[sectionId]" options={{ title: '' }} />
+            <Stack.Screen name="teacher/lesson/[lessonId]/questions" options={{ title: '' }} />
             <Stack.Screen name="parent/index" options={{ title: 'EduPanda' }} />
             <Stack.Screen name="parent/[studentId]" options={{ title: '' }} />
+            <Stack.Screen name="parent/add-child" options={{ title: '' }} />
           </Stack>
         </ThemeProvider>
       </QueryClientProvider>

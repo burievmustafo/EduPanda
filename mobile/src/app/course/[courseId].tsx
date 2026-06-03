@@ -87,8 +87,17 @@ function SectionBlock({ section, enrolled }: { section: SectionDTO; enrolled: bo
   const { t } = useTranslation();
   const locale = useLocale();
   const theme = useTheme();
-  const quizUnlocked =
-    section.lessons.length > 0 && section.lessons.every((lesson) => lesson.progress?.isCompleted);
+  // Quiz unlocked if:
+  // 1. All lessons are completed (watched >= 90%), OR
+  // 2. All lessons have been started (progress exists) and enrolled
+  //    — fallback for YouTube where 90% may be hard to reach.
+  const allCompleted =
+    section.lessons.length > 0 && section.lessons.every((l) => l.progress?.isCompleted);
+  const allStarted =
+    enrolled &&
+    section.lessons.length > 0 &&
+    section.lessons.every((l) => l.progress && l.progress.watchedPercent > 0);
+  const quizUnlocked = allCompleted || allStarted;
 
   return (
     <ThemedView type="backgroundElement" style={styles.section}>
@@ -123,23 +132,35 @@ function LessonRow({ lesson, enrolled }: { lesson: LessonListItemDTO; enrolled: 
   const { t } = useTranslation();
   const locale = useLocale();
   const locked = !lesson.free && !enrolled;
-  const icon = locked ? 'Locked - ' : lesson.progress?.isCompleted ? 'Done - ' : 'Video - ';
+  const completed = lesson.progress?.isCompleted;
+  const pct = lesson.progress?.watchedPercent ?? 0;
 
   return (
     <Pressable
       disabled={locked}
       onPress={() => router.push({ pathname: '/learn/[lessonId]', params: { lessonId: lesson.id } })}
-      style={({ pressed }) => [styles.lessonRow, { opacity: locked ? 0.5 : pressed ? 0.85 : 1 }]}>
+      style={({ pressed }) => [styles.lessonRow, { opacity: locked ? 0.45 : pressed ? 0.85 : 1 }]}>
       <View style={styles.lessonLeft}>
-        <ThemedText>
-          {icon}
-          {tText(lesson.title, locale)}
-        </ThemedText>
-        <ThemedText type="small" style={styles.muted}>
-          {formatTime(lesson.durationSec)}
-          {lesson.free ? ` - ${t('course.free')}` : ''}
-          {lesson.progress ? ` - ${lesson.progress.watchedPercent}% ${t('lesson.watched')}` : ''}
-        </ThemedText>
+        <View style={styles.lessonTitleRow}>
+          <ThemedText style={styles.lessonIcon}>
+            {locked ? '🔒' : completed ? '✅' : '▶️'}
+          </ThemedText>
+          <ThemedText style={styles.lessonTitle} numberOfLines={2}>
+            {tText(lesson.title, locale)}
+          </ThemedText>
+        </View>
+        <View style={styles.lessonMeta}>
+          <ThemedText type="small" style={styles.muted}>
+            {formatTime(lesson.durationSec)}
+            {lesson.free ? ` · ${t('course.free')}` : ''}
+            {pct > 0 && !completed ? ` · ${pct}%` : ''}
+          </ThemedText>
+        </View>
+        {pct > 0 && !completed ? (
+          <View style={styles.miniBarBg}>
+            <View style={[styles.miniBarFill, { width: `${pct}%` }]} />
+          </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -165,7 +186,13 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(128,128,128,0.25)',
   },
-  lessonLeft: { gap: 2 },
+  lessonLeft: { flex: 1, gap: 4 },
+  lessonTitleRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  lessonIcon: { fontSize: 16, lineHeight: 22 },
+  lessonTitle: { flex: 1, fontSize: 15, fontWeight: '500', lineHeight: 22 },
+  lessonMeta: { paddingLeft: 24 },
+  miniBarBg: { marginLeft: 24, height: 3, borderRadius: 2, backgroundColor: 'rgba(128,128,128,0.2)', overflow: 'hidden' },
+  miniBarFill: { height: 3, borderRadius: 2, backgroundColor: '#208AEF' },
   quizRow: { marginTop: Spacing.one, borderWidth: 1, borderRadius: 12, padding: Spacing.three, alignItems: 'center' },
   quizText: { color: '#208AEF' },
 });

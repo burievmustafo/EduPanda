@@ -2,8 +2,8 @@ import { authMiddleware } from '@clerk/nextjs'
 import createMiddleware from 'next-intl/middleware'
 
 const intlMiddleware = createMiddleware({
-	locales: ['en', 'ru', 'uz', 'tr'],
-	defaultLocale: 'uz',
+	locales: ['en', 'ru', 'uz', 'tr', 'ja'],
+	defaultLocale: 'en',
 })
 
 export default authMiddleware({
@@ -23,6 +23,10 @@ export default authMiddleware({
 		'/:lng/ai',
 		// Mobil API: Clerk bloklamasin (auth qo'lda — Bearer token route ichida tekshiriladi)
 		'/:lng/api/mobile/(.*)',
+		// EduPanda web: kurslar va o'quv sahifalar
+		'/:lng/edupanda',
+		'/:lng/edupanda/courses',
+		'/:lng/edupanda/course/:id',
 	],
 	ignoredRoutes: ['/en/api/webhook'],
 })

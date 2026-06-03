@@ -2,113 +2,151 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { createStudentInviteCode, getMe } from '@/api/me';
-import { LoadingState, Screen } from '@/components/screen';
+import { createStudentInviteCode } from '@/api/me';
+import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRAND, Button } from '@/components/ui-button';
-import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
+import { Brand, Radius, Shadow, Spacing } from '@/constants/theme';
+import { useMe, useStudentDashboard } from '@/hooks/queries';
+import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/store/session-store';
 
 export default function ProfileTab() {
   const { t } = useTranslation();
   const role = useSession((s) => s.role);
-  const { data: me, loading } = useAsync(() => getMe(), [role]);
+  const theme = useTheme();
+  const { data: me, isLoading } = useMe();
+  const { data: dashboard } = useStudentDashboard();
+
   const [inviteCode, setInviteCode] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const roleLabel =
-    me?.role === 'teacher'
-      ? t('role.teacher')
-      : me?.role === 'parent'
-        ? t('role.parent')
-        : t('role.student');
+    role === 'teacher' ? t('role.teacher') : role === 'parent' ? t('role.parent') : t('role.student');
+
+  const completedLessons = dashboard?.inProgress.reduce((s, c) => s + c.completedLessons, 0) ?? 0;
+  const totalAttempts = dashboard?.recentAttempts.length ?? 0;
 
   return (
     <Screen>
-      {loading ? (
-        <LoadingState label={t('common.loading')} />
-      ) : (
-        <ThemedView type="backgroundElement" style={styles.card}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={36} color="#ffffff" />
-          </View>
-          <ThemedText style={styles.name}>{me?.fullName || '—'}</ThemedText>
-          {me?.email ? (
-            <ThemedText type="small" style={styles.muted}>
-              {me.email}
-            </ThemedText>
-          ) : null}
-          <View style={styles.roleBadge}>
-            <ThemedText type="smallBold" style={styles.roleText}>
-              {roleLabel}
-            </ThemedText>
-          </View>
-        </ThemedView>
-      )}
+      {/* Settings button */}
+      <View style={styles.topRow}>
+        <ThemedText style={styles.pageTitle}>Profile</ThemedText>
+        <Pressable onPress={() => router.push('/settings')} style={styles.settingsBtn}>
+          <Ionicons name="settings-outline" size={22} color={theme.textSecondary} />
+        </Pressable>
+      </View>
 
-      {me?.role === 'student' ? (
-        <ThemedView type="backgroundElement" style={styles.inviteCard}>
-          <ThemedText type="smallBold">{t('profile.inviteCode')}</ThemedText>
-          <ThemedText type="small" style={styles.muted}>
-            {t('profile.shareCode')}
-          </ThemedText>
-          {inviteCode ? <ThemedText style={styles.code}>{inviteCode}</ThemedText> : null}
+      {!isLoading && (
+        <>
+          {/* Avatar + info */}
+          <ThemedView style={[styles.card, Shadow.sm, { backgroundColor: theme.backgroundCard }]}>
+            <View style={styles.avatarRow}>
+              <View style={[styles.avatar, { backgroundColor: Brand.primary }]}>
+                <ThemedText style={styles.avatarLetter}>
+                  {(me?.fullName?.[0] ?? '?').toUpperCase()}
+                </ThemedText>
+              </View>
+              <View style={styles.info}>
+                <ThemedText style={styles.name}>{me?.fullName || '—'}</ThemedText>
+                <ThemedText style={styles.email}>{me?.email || ''}</ThemedText>
+                <View style={[styles.roleBadge, { backgroundColor: Brand.primaryLight }]}>
+                  <ThemedText style={[styles.roleText, { color: Brand.primary }]}>
+                    {roleLabel.toUpperCase()}
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+
+            {/* Stats */}
+            {role === 'student' && (
+              <View style={[styles.statsRow, { borderTopColor: theme.border }]}>
+                <Stat label="Lessons done" value={`${completedLessons}`} />
+                <StatDivider />
+                <Stat label="Quiz attempts" value={`${totalAttempts}`} />
+                <StatDivider />
+                <Stat label="Courses" value={`${dashboard?.inProgress.length ?? 0}`} />
+              </View>
+            )}
+          </ThemedView>
+
+          {/* Invite code (student only) */}
+          {role === 'student' && (
+            <ThemedView style={[styles.inviteCard, { backgroundColor: theme.backgroundCard }]}>
+              <ThemedText style={styles.inviteTitle}>{t('profile.inviteCode')}</ThemedText>
+              <ThemedText style={styles.inviteHint}>{t('profile.shareCode')}</ThemedText>
+              {inviteCode ? (
+                <ThemedText style={[styles.codeText, { color: Brand.primary }]}>{inviteCode}</ThemedText>
+              ) : null}
+              <Button
+                title={t('profile.generateInviteCode')}
+                variant="secondary"
+                loading={inviteLoading}
+                onPress={async () => {
+                  setInviteLoading(true);
+                  try {
+                    const res = await createStudentInviteCode();
+                    setInviteCode(res.code);
+                  } finally {
+                    setInviteLoading(false);
+                  }
+                }}
+              />
+            </ThemedView>
+          )}
+
+          {/* Switch role */}
           <Button
-            title={t('profile.generateInviteCode')}
-            variant="secondary"
-            loading={inviteLoading}
-            onPress={async () => {
-              setInviteLoading(true);
-              try {
-                const res = await createStudentInviteCode();
-                setInviteCode(res.code);
-              } finally {
-                setInviteLoading(false);
-              }
-            }}
+            title={t('profile.switchRole')}
+            variant="ghost"
+            onPress={() => router.replace('/')}
           />
-        </ThemedView>
-      ) : null}
 
-      <Button
-        title={t('profile.switchRole')}
-        variant="secondary"
-        onPress={() => router.replace('/')}
-      />
-
-      <ThemedText type="small" style={styles.about}>
-        {t('profile.about')}
-      </ThemedText>
+          <ThemedText style={styles.about}>{t('profile.about')}</ThemedText>
+        </>
+      )}
     </Screen>
   );
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.stat}>
+      <ThemedText style={styles.statValue}>{value}</ThemedText>
+      <ThemedText style={styles.statLabel}>{label}</ThemedText>
+    </View>
+  );
+}
+
+function StatDivider() {
+  const theme = useTheme();
+  return <View style={[styles.statDivider, { backgroundColor: theme.border }]} />;
+}
+
 const styles = StyleSheet.create({
-  card: { borderRadius: 16, padding: Spacing.four, alignItems: 'center', gap: Spacing.one },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: BRAND,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.one,
-  },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three },
+  pageTitle: { fontSize: 28, fontWeight: '800' },
+  settingsBtn: { padding: 4 },
+  card: { borderRadius: Radius.lg, overflow: 'hidden', marginBottom: Spacing.two },
+  avatarRow: { flexDirection: 'row', gap: Spacing.three, padding: Spacing.three, alignItems: 'center' },
+  avatar: { width: 68, height: 68, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
+  avatarLetter: { fontSize: 28, fontWeight: '800', color: '#fff' },
+  info: { flex: 1, gap: 4 },
   name: { fontSize: 20, fontWeight: '700' },
-  muted: { opacity: 0.7 },
-  roleBadge: {
-    marginTop: Spacing.two,
-    backgroundColor: 'rgba(32,138,239,0.15)',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: 999,
-  },
-  roleText: { color: BRAND, textTransform: 'uppercase', letterSpacing: 0.5 },
-  about: { opacity: 0.5, textAlign: 'center', marginTop: Spacing.four },
-  inviteCard: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
-  code: { fontSize: 34, fontWeight: '800', color: BRAND, letterSpacing: 4, textAlign: 'center' },
+  email: { fontSize: 13, opacity: 0.6 },
+  roleBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.pill, marginTop: 4 },
+  roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  statsRow: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: Spacing.two },
+  stat: { flex: 1, alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 22, fontWeight: '800', color: BRAND },
+  statLabel: { fontSize: 11, opacity: 0.6 },
+  statDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch' },
+  inviteCard: { borderRadius: Radius.lg, padding: Spacing.three, gap: Spacing.two, marginBottom: Spacing.two },
+  inviteTitle: { fontSize: 16, fontWeight: '700' },
+  inviteHint: { fontSize: 13, opacity: 0.65 },
+  codeText: { fontSize: 36, fontWeight: '800', letterSpacing: 5, textAlign: 'center', paddingVertical: Spacing.two },
+  about: { opacity: 0.4, textAlign: 'center', marginTop: Spacing.four, fontSize: 12 },
 });
