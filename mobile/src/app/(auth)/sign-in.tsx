@@ -22,22 +22,29 @@ import { AppText } from '@/components/ui/app-text'
 import { figmaAuth } from '@/constants/figma-auth-theme'
 import { spacing } from '@/design/tokens'
 import { clerkErrorMessage } from '@/lib/clerk-error'
+import { requestEmailOtp, verifyEmailOtp, type EmailOtpMode } from '@/lib/email-otp-auth'
 import { isValidEmail } from '@/lib/email'
 import { useSocialAuth, type SocialStrategy } from '@/lib/social-auth'
-import { useSignIn } from '@clerk/clerk-expo'
+import { useSignIn, useSignUp } from '@clerk/clerk-expo'
 
 export default function SignInScreen() {
 	const { t } = useTranslation()
 	const insets = useSafeAreaInsets()
-	const { signIn, setActive, isLoaded } = useSignIn()
+	const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn()
+	const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp()
 	const socialAuth = useSocialAuth()
+
 	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
+	const [code, setCode] = useState('')
+	const [otpMode, setOtpMode] = useState<EmailOtpMode | null>(null)
 	const [loading, setLoading] = useState(false)
 	const [socialLoading, setSocialLoading] = useState<SocialStrategy | null>(null)
 
-	const onSubmit = async () => {
-		if (!email.trim() || !password.trim()) {
+	const isLoaded = signInLoaded && signUpLoaded
+	const pendingCode = otpMode !== null
+
+	const onSendCode = async () => {
+		if (!email.trim()) {
 			Alert.alert(t('auth.signIn'), t('auth.fillAllFields'))
 			return
 		}
@@ -45,19 +52,41 @@ export default function SignInScreen() {
 			Alert.alert(t('auth.signIn'), t('auth.invalidEmail'))
 			return
 		}
-		if (!isLoaded || !signIn) return
+		if (!isLoaded || !signIn || !signUp) return
+
 		setLoading(true)
 		try {
-			const attempt = await signIn.create({
-				identifier: email.trim(),
-				password,
-			})
-			if (attempt.status === 'complete') {
-				await setActive({ session: attempt.createdSessionId })
-				router.replace('/(tabs)/home')
-			} else {
-				Alert.alert(t('auth.signIn'), 'Additional verification is required.')
+			const mode = await requestEmailOtp(email, signIn, signUp)
+			setOtpMode(mode)
+			setCode('')
+		} catch (err) {
+			if (err instanceof Error && err.message === 'GOOGLE_ONLY') {
+				Alert.alert(t('auth.signIn'), t('auth.useGoogleInstead'))
+				return
 			}
+			Alert.alert(t('auth.signIn'), clerkErrorMessage(err))
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const onVerifyCode = async () => {
+		if (!code.trim()) {
+			Alert.alert(t('auth.signIn'), t('auth.fillAllFields'))
+			return
+		}
+		if (!isLoaded || !signIn || !signUp || !otpMode) return
+
+		setLoading(true)
+		try {
+			const result = await verifyEmailOtp(otpMode, code, signIn, signUp)
+			if (result.status === 'complete' && result.sessionId) {
+				const setActive = otpMode === 'signIn' ? setSignInActive : setSignUpActive
+				await setActive({ session: result.sessionId })
+				router.replace('/(tabs)/home')
+				return
+			}
+			Alert.alert(t('auth.signIn'), t('auth.invalidCode'))
 		} catch (err) {
 			Alert.alert(t('auth.signIn'), clerkErrorMessage(err))
 		} finally {
@@ -101,45 +130,62 @@ export default function SignInScreen() {
 					keyboardShouldPersistTaps="handled"
 					showsVerticalScrollIndicator={false}>
 					<AppText variant="h2" style={styles.title}>
-						{t('auth.signInTitle')}
+						{pendingCode ? t('auth.verifyTitle') : t('auth.signInTitle')}
 					</AppText>
 					<AppText variant="body" style={styles.subtitle}>
-						{t('auth.signInSubtitle')}
+						{pendingCode
+							? t('auth.verifySubtitle', { email: email.trim() })
+							: t('auth.signInSubtitleEmail')}
 					</AppText>
 
 					<View style={styles.form}>
-						<AuthTextField
-							label={t('auth.emailLabel')}
-							value={email}
-							onChangeText={setEmail}
-							keyboardType="email-address"
-							autoCapitalize="none"
-							autoComplete="email"
-							placeholder="youremail@gmail.com"
-						/>
-						<AuthTextField
-							label={t('auth.passwordLabel')}
-							value={password}
-							onChangeText={setPassword}
-							secureTextEntry
-							autoComplete="password"
-							placeholder="••••••••"
-						/>
-						<Pressable
-							onPress={() => router.push('/(auth)/reset-password')}
-							style={styles.forgot}
-							accessibilityRole="link">
-							<AppText variant="small" style={styles.forgotText}>
-								{t('auth.forgotPassword')}
-							</AppText>
-						</Pressable>
-
-						<FigmaPrimaryButton
-							title={t('auth.signIn')}
-							onPress={onSubmit}
-							loading={loading}
-							style={styles.submit}
-						/>
+						{!pendingCode ? (
+							<>
+								<AuthTextField
+									label={t('auth.emailLabel')}
+									value={email}
+									onChangeText={setEmail}
+									keyboardType="email-address"
+									autoCapitalize="none"
+									autoComplete="email"
+									placeholder="youremail@gmail.com"
+								/>
+								<FigmaPrimaryButton
+									title={t('auth.sendCode')}
+									onPress={() => void onSendCode()}
+									loading={loading}
+									style={styles.submit}
+								/>
+							</>
+						) : (
+							<>
+								<AuthTextField
+									label={t('auth.codeLabel')}
+									value={code}
+									onChangeText={setCode}
+									keyboardType="number-pad"
+									autoComplete="one-time-code"
+									placeholder="123456"
+								/>
+								<FigmaPrimaryButton
+									title={t('auth.verifyCode')}
+									onPress={() => void onVerifyCode()}
+									loading={loading}
+									style={styles.submit}
+								/>
+								<Pressable
+									onPress={() => {
+										setOtpMode(null)
+										setCode('')
+									}}
+									style={styles.changeEmail}
+									accessibilityRole="button">
+									<AppText variant="small" style={styles.changeEmailText}>
+										{t('auth.changeEmail')}
+									</AppText>
+								</Pressable>
+							</>
+						)}
 					</View>
 
 					<AuthDivider />
@@ -206,14 +252,15 @@ const styles = StyleSheet.create({
 		marginTop: spacing['2xl'],
 		gap: spacing.lg,
 	},
-	forgot: {
-		alignSelf: 'flex-end',
-	},
-	forgotText: {
-		color: figmaAuth.textMuted,
-	},
 	submit: {
 		marginTop: spacing.sm,
+	},
+	changeEmail: {
+		alignSelf: 'center',
+	},
+	changeEmailText: {
+		color: figmaAuth.textMuted,
+		textDecorationLine: 'underline',
 	},
 	socialGap: { height: spacing.sm },
 	footer: {

@@ -12,7 +12,7 @@ export const figmaLight = {
 	tabActiveText: '#EFF6FF',
 	tabInactiveBorder: '#2563EB',
 	tabInactiveText: '#1E3A8A',
-	cardBorder: '#FFFFFF',
+	cardBorder: '#E2E8F0',
 	cardShadow: 'rgba(37, 99, 235, 0.22)',
 	thumbOverlay: 'rgba(37, 99, 235, 0.32)',
 	progressTrack: '#D9D9D9',

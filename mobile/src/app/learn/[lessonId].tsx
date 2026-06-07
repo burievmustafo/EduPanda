@@ -29,6 +29,7 @@ import { useLocale } from '@/hooks/use-locale'
 import { getLearningFlow } from '@/lib/lesson-flow'
 import { formatTime, tText } from '@/lib/localized'
 import { stripHtml } from '@/lib/strip-html'
+import { loadLessonNotes, persistLessonNotes } from '@/store/lesson-notes-store'
 import type { LessonDetailDTO, TimedQuestionDTO, WatchedRange } from '@/types/dto'
 
 export default function LearnScreen() {
@@ -52,8 +53,6 @@ function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
 	const locale = useLocale()
 	const insets = useSafeAreaInsets()
 	const theme = useFigmaTheme()
-	const answeredIds = lesson.answeredQuestionIds ?? []
-
 	const [activeQuestion, setActiveQuestion] = useState<TimedQuestionDTO | null>(null)
 	const [videoPaused, setVideoPaused] = useState<boolean | undefined>(undefined)
 	const [watchedPercent, setWatchedPercent] = useState(lesson.progress?.watchedPercent ?? 0)
@@ -70,7 +69,7 @@ function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
 	const { data: sections } = useSections(lesson.courseId)
 
 	const activeRef = useRef(false)
-	const shownRef = useRef<Set<string>>(new Set(answeredIds))
+	const shownRef = useRef<Set<string>>(new Set())
 	const rangesRef = useRef<WatchedRange[]>([])
 	const lastTimeRef = useRef(lesson.progress?.lastPositionSec ?? 0)
 	const lastSyncRef = useRef(lesson.progress?.lastPositionSec ?? 0)
@@ -108,12 +107,14 @@ function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
 		}
 
 		if (canTriggerQuestions && !activeRef.current) {
-			const candidate = lesson.timedQuestions.find(
-				(question) =>
-					question.triggerTimeSec > 0 &&
-					currentTime >= question.triggerTimeSec &&
-					!shownRef.current.has(question.id),
-			)
+			const candidate = lesson.timedQuestions
+				.filter(
+					(question) =>
+						question.triggerTimeSec > 0 &&
+						currentTime >= question.triggerTimeSec &&
+						!shownRef.current.has(question.id),
+				)
+				.sort((a, b) => a.triggerTimeSec - b.triggerTimeSec)[0]
 
 			if (candidate) {
 				shownRef.current.add(candidate.id)
@@ -143,6 +144,23 @@ function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
 	}
 
 	useEffect(() => () => void persist(), [])
+
+	useEffect(() => {
+		shownRef.current = new Set()
+		activeRef.current = false
+		setActiveQuestion(null)
+		setVideoPaused(undefined)
+	}, [lesson.id])
+
+	useEffect(() => {
+		let active = true
+		void loadLessonNotes(lesson.id).then((saved) => {
+			if (active) setNotes(saved)
+		})
+		return () => {
+			active = false
+		}
+	}, [lesson.id])
 
 	const handleResolved = () => {
 		activeRef.current = false
@@ -191,10 +209,12 @@ function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
 
 	const saveNote = () => {
 		if (!noteDraft.trim()) return
-		setNotes((prev) => [
+		const next: LessonNote[] = [
 			{ id: `${Date.now()}`, timeSec: Math.round(lastTimeRef.current), text: noteDraft.trim() },
-			...prev,
-		])
+			...notes,
+		]
+		setNotes(next)
+		void persistLessonNotes(lesson.id, next)
 		setNoteDraft('')
 		setNoteSheetOpen(false)
 		setActiveTab('notes')
