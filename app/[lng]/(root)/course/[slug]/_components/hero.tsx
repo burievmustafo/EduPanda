@@ -16,6 +16,11 @@ import FillLoading from '@/components/shared/fill-loading'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import Vimeo from '@u-wave/react-vimeo'
 import { formatLessonTime } from '@/lib/utils'
+import {
+	getDirectVideoUrl,
+	getVimeoId,
+	getYouTubeEmbedUrl,
+} from '@/lib/video-url'
 
 function Hero(course: ICourse) {
 	const [loading, setLoading] = useState(false)
@@ -24,6 +29,9 @@ function Hero(course: ICourse) {
 	const [lesson, setLesson] = useState<ILesson | null>(null)
 
 	const t = useTranslate()
+	const youtubeEmbedUrl = getYouTubeEmbedUrl(lesson?.videoUrl)
+	const vimeoId = getVimeoId(lesson?.videoUrl)
+	const directVideoUrl = getDirectVideoUrl(lesson?.videoUrl)
 
 	const onHandler = async () => {
 		if (lessons.length > 0) return setOpen(true)
@@ -108,7 +116,34 @@ function Hero(course: ICourse) {
 
 			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogContent className='custom-scrollbar max-h-full max-w-full overflow-y-auto md:max-w-4xl'>
-					<Vimeo video={lesson?.videoUrl!} responsive autoplay />
+					{youtubeEmbedUrl ? (
+						<div className='aspect-video overflow-hidden rounded-md bg-black'>
+							<iframe
+								src={youtubeEmbedUrl}
+								title={lesson?.title ?? 'Lesson video'}
+								className='size-full'
+								allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+								allowFullScreen
+							/>
+						</div>
+					) : vimeoId ? (
+						<Vimeo video={vimeoId} responsive autoplay />
+					) : directVideoUrl ? (
+						<div className='aspect-video overflow-hidden rounded-md bg-black'>
+							<video
+								src={directVideoUrl}
+								title={lesson?.title ?? 'Lesson video'}
+								className='size-full'
+								controls
+								playsInline
+								autoPlay
+							/>
+						</div>
+					) : (
+						<div className='rounded-md bg-secondary p-4 text-sm text-muted-foreground'>
+							This lesson video URL is not supported. Use a YouTube, Vimeo, or direct video link.
+						</div>
+					)}
 					<h1 className='font-space-grotesk text-2xl font-bold'>
 						{t('freeLessons')}
 					</h1>

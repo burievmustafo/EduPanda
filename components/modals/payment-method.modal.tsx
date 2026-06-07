@@ -69,6 +69,12 @@ function StripeElement() {
 			setLoading(false)
 		} else {
 			const customer = await getCustomer(userId!)
+			if (!customer) {
+				setError(t('paymentError'))
+				setLoading(false)
+				return
+			}
+
 			await atachPayment(paymentMethod.id, customer.id, pathname)
 			onClose()
 			setError('')

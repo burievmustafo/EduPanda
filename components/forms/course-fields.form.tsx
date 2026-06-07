@@ -21,7 +21,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '../ui/select'
-import { courseCategory, courseLanguage, courseLevels } from '@/constants'
+import { courseLanguage, courseLevels, resolveCourseCategory } from '@/constants'
+import { CourseCategoryField } from '@/components/forms/course-category-field'
 import { Button } from '../ui/button'
 import { createCourse } from '@/actions/course.action'
 import { toast } from 'sonner'
@@ -37,6 +38,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 function CourseFieldsForm() {
 	const [isLoading, setIsLoading] = useState(false)
+	const [isImageUploading, setIsImageUploading] = useState(false)
 	const [previewImage, setPreviewImage] = useState('')
 	const [open, setOpen] = useState(false)
 
@@ -52,16 +54,32 @@ function CourseFieldsForm() {
 		const files = e.target.files
 		if (!files) return null
 		const file = files[0]
+		if (!file) return null
+		if (!file.type.startsWith('image/')) {
+			return toast.error('Please choose an image file')
+		}
 
 		const reader = new FileReader()
 
 		reader.readAsDataURL(file)
-		reader.onload = e => {
+		reader.onload = async e => {
 			const refs = ref(storage, `/praktikum/course/${uuidv4()}`)
 			const result = e.target?.result as string
-			const promise = uploadString(refs, result, 'data_url').then(() => {
-				getDownloadURL(refs).then(url => setPreviewImage(url))
-			})
+			setPreviewImage(result)
+			setIsImageUploading(true)
+
+			const promise = uploadString(refs, result, 'data_url')
+				.then(() => getDownloadURL(refs))
+				.then(url => {
+					setPreviewImage(url)
+					return url
+				})
+				.catch(error => {
+					console.error('Course image upload failed:', error)
+					toast.warning('Firebase upload failed. The local image preview will be used.')
+					return result
+				})
+				.finally(() => setIsImageUploading(false))
 
 			toast.promise(promise, {
 				loading: 'Uploading...',
@@ -69,17 +87,26 @@ function CourseFieldsForm() {
 				error: 'Something went wrong!',
 			})
 		}
+
+		reader.onerror = () => {
+			setIsImageUploading(false)
+			toast.error('Could not read this image. Please choose another file.')
+		}
 	}
 
 	function onSubmit(values: z.infer<typeof courseSchema>) {
+		if (isImageUploading) {
+			return toast.error('Please wait until image upload finishes')
+		}
 		if (!previewImage) {
 			return toast.error('Please upload a preview image')
 		}
 		setIsLoading(true)
-		const { oldPrice, currentPrice } = values
+		const { oldPrice, currentPrice, categoryCustom, category, ...rest } = values
 		const promise = createCourse(
 			{
-				...values,
+				...rest,
+				category: resolveCourseCategory(category, categoryCustom),
 				oldPrice: +oldPrice,
 				currentPrice: +currentPrice,
 				previewImage,
@@ -219,35 +246,11 @@ function CourseFieldsForm() {
 								</FormItem>
 							)}
 						/>
-						<FormField
+						<CourseCategoryField
 							control={form.control}
-							name='category'
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>
-										Category<span className='text-red-500'>*</span>
-									</FormLabel>
-									<FormControl>
-										<Select
-											defaultValue={field.value}
-											onValueChange={field.onChange}
-											disabled={isLoading}
-										>
-											<SelectTrigger className='w-full bg-secondary'>
-												<SelectValue placeholder={'Select'} />
-											</SelectTrigger>
-											<SelectContent>
-												{courseCategory.map(item => (
-													<SelectItem key={item} value={item}>
-														{item}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+							categoryName='category'
+							customName='categoryCustom'
+							disabled={isLoading}
 						/>
 						<FormField
 							control={form.control}
@@ -327,7 +330,8 @@ function CourseFieldsForm() {
 							<Input
 								className='bg-secondary'
 								type='file'
-								disabled={isLoading}
+								accept='image/*'
+								disabled={isLoading || isImageUploading}
 								onChange={onUpload}
 							/>
 						</FormItem>
@@ -342,8 +346,8 @@ function CourseFieldsForm() {
 						>
 							Clear
 						</Button>
-						<Button type='submit' disabled={isLoading}>
-							Submit
+						<Button type='submit' disabled={isLoading || isImageUploading}>
+							{isImageUploading ? 'Uploading image...' : 'Submit'}
 						</Button>
 						{previewImage && (
 							<Button
@@ -374,6 +378,7 @@ function CourseFieldsForm() {
 						variant={'destructive'}
 						onClick={() => {
 							setPreviewImage('')
+							setIsImageUploading(false)
 							setOpen(false)
 						}}
 					>
@@ -394,6 +399,7 @@ const defaultVal = {
 	requirements: '',
 	level: '',
 	category: '',
+	categoryCustom: '',
 	language: '',
 	oldPrice: '',
 	currentPrice: '',

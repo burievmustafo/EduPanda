@@ -7,7 +7,8 @@ import type { Locale, LocalizedText } from '@/types/dto';
 export function tText(value: LocalizedText | undefined | null, locale: Locale): string {
   if (!value) return '';
   if (locale === 'ja' && value.ja && value.ja.trim().length > 0) return value.ja;
-  return value.en;
+  if (value.en && value.en.trim().length > 0) return value.en;
+  return value.ja ?? '';
 }
 
 /** Soniyani mm:ss formatiga aylantiradi (masalan 75 -> "1:15"). */

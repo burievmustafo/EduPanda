@@ -22,7 +22,7 @@ export default function TeacherDashboardScreen() {
 
   return (
     <Screen onRefresh={refetch} refreshing={isRefetching}>
-      <Stack.Screen options={{ title: t('role.teacher') }} />
+      <Stack.Screen options={{ title: t('role.instructor') }} />
       <View style={styles.header}>
         <ThemedText type="subtitle">{t('dashboard.myCourses')}</ThemedText>
         <LanguageToggle />
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
   muted: { opacity: 0.7 },
   stats: { flexDirection: 'row', gap: Spacing.four, marginTop: Spacing.two },
   stat: { alignItems: 'flex-start' },
-  statValue: { fontSize: 22, fontWeight: '800', color: '#208AEF' },
+  statValue: { fontSize: 22, fontWeight: '800', color: '#2563EB' },
 });

@@ -11,7 +11,7 @@
 
 export type Locale = 'en' | 'ja';
 
-export type UserRole = 'student' | 'teacher' | 'parent' | 'admin';
+export type UserRole = 'student' | 'instructor' | 'admin';
 
 /** en majburiy, ja ixtiyoriy (yo'q bo'lsa en'ga fallback). */
 export type LocalizedText = { en: string; ja?: string };
@@ -27,6 +27,11 @@ export type CourseDTO = {
   previewImage?: string;
   level: string;
   category: string;
+  language?: string;
+  learning?: LocalizedText;
+  requirements?: LocalizedText;
+  currentPrice?: number;
+  oldPrice?: number;
   instructor: { id: string; fullName: string; picture?: string };
   sectionsCount: number;
   lessonsCount: number;
@@ -103,6 +108,28 @@ export type QuizDTO = {
 };
 
 export type QuizAnswerInput = { questionId: string; selectedOptionId: string };
+
+export type CourseGradeDTO = {
+  attemptId: string;
+  quizTitle: LocalizedText;
+  sectionTitle: LocalizedText;
+  score: number;
+  passed: boolean;
+  submittedAt: string;
+};
+
+export type CourseResourceDTO = {
+  id: string;
+  title: string;
+  url: string;
+  type: 'link' | 'file';
+};
+
+export type CourseReviewDTO = {
+  id: string;
+  rating: number;
+  data: string;
+};
 
 export type QuizAttemptResultDTO = {
   attemptId: string;

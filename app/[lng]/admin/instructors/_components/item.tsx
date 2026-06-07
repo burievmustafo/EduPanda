@@ -22,6 +22,8 @@ interface Props {
 }
 function Item({ item }: Props) {
 	const pathname = usePathname()
+	const isPendingInstructor =
+		item.approvedInstructor && item.role !== 'instructor' && !item.isAdmin
 
 	const onRoleChange = async () => {
 		const msg = item.role === 'instructor' ? 'Disapprove' : 'Approve'
@@ -30,13 +32,13 @@ function Item({ item }: Props) {
 		if (isConfirmed) {
 			const upd = updateUser({
 				clerkId: item.clerkId,
-				updatedData: { role: item.role === 'user' ? 'instructor' : 'user' },
+				updatedData: { role: item.role === 'instructor' ? 'student' : 'instructor' },
 				path: pathname,
 			})
 
 			const not = sendNotification(
 				item.clerkId,
-				`messageRoleChanged ${item.role === 'user' ? 'instructor' : 'user'}`
+				`messageRoleChanged ${item.role === 'instructor' ? 'student' : 'instructor'}`
 			)
 
 			const promise = Promise.all([upd, not])
@@ -51,13 +53,15 @@ function Item({ item }: Props) {
 
 	const onAdmin = async () => {
 		const isConfirmed = confirm(
-			`Are you sure you want to make this user an admin?`
+			`Are you sure you want to ${item.isAdmin ? 'remove admin access from' : 'make admin'} this user?`
 		)
 
 		if (isConfirmed) {
 			const upd = updateUser({
 				clerkId: item.clerkId,
-				updatedData: { isAdmin: true },
+				updatedData: item.isAdmin
+					? { isAdmin: false, role: 'student' }
+					: { isAdmin: true, role: 'admin', approvedInstructor: false },
 				path: pathname,
 			})
 
@@ -84,7 +88,7 @@ function Item({ item }: Props) {
 		if (isConfirmed) {
 			const upd = updateUser({
 				clerkId: item.clerkId,
-				updatedData: { approvedInstructor: false, role: 'user' },
+				updatedData: { approvedInstructor: false, role: 'student' },
 				path: pathname,
 			})
 
@@ -103,8 +107,7 @@ function Item({ item }: Props) {
 	return (
 		<TableRow>
 			<TableCell className='text-xs capitalize'>
-				{item.isAdmin ? 'Admin/' : ''}
-				{item.role}
+				{item.isAdmin ? 'Admin' : isPendingInstructor ? 'Pending' : item.role}
 			</TableCell>
 			<TableCell className='text-xs'>{item.email}</TableCell>
 <TableCell

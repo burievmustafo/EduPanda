@@ -220,6 +220,9 @@ export const getAllCourses = async (params: GetAllCoursesParams) => {
 			case 'uzbek':
 				query.language = 'uzbek'
 				break
+			case 'japanese':
+				query.language = 'japanese'
+				break
 			case 'russian':
 				query.language = 'russian'
 				break
@@ -289,7 +292,7 @@ export const purchaseCourse = async (course: string, clerkId: string) => {
 export const getDashboardCourse = async (clerkId: string, courseId: string) => {
 	try {
 		await connectToDatabase()
-		const course = await Course.findById(courseId).select('title')
+		const course = await Course.findById(courseId).select('title resources')
 		const sections = await Section.find({ course: courseId })
 			.select('title')
 			.sort({ position: 1 })

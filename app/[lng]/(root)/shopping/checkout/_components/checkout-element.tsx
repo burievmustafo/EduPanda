@@ -25,6 +25,14 @@ const stripePromise = loadStripe(
 	process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 )
 
+function formatUsd(price?: number | null) {
+	if (typeof price !== 'number' || Number.isNaN(price)) return null
+	return price.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	})
+}
+
 interface Props {
 	cards: ICard[]
 }
@@ -172,10 +180,7 @@ function CheckoutElement({ cards }: Props) {
 
 										<div className='flex items-center gap-2'>
 											<h1 className='font-space-grotesk text-sm font-bold'>
-												{item.currentPrice.toLocaleString('en-US', {
-													style: 'currency',
-													currency: 'USD',
-												})}
+												{formatUsd(item.currentPrice) ?? 'Free'}
 											</h1>
 										</div>
 									</div>

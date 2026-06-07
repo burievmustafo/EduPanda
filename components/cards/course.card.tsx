@@ -4,20 +4,31 @@ import { Separator } from '../ui/separator'
 import { ICourse } from '@/app.types'
 import CustomImage from '../shared/custom-image'
 
+function formatUsd(price?: number | null) {
+	if (typeof price !== 'number' || Number.isNaN(price)) return null
+	return price.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	})
+}
+
 function CourseCard(course: ICourse) {
+	const oldPrice = formatUsd(course.oldPrice)
+	const currentPrice = formatUsd(course.currentPrice)
+
 	return (
-		<Link href={`/course/${course._id}`}>
-			<Card className='group w-full'>
-				<CardContent className='relative h-56 w-full'>
+		<Link href={`/course/${course._id}`} className='block h-full'>
+			<Card className='group flex h-full w-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl'>
+				<CardContent className='relative aspect-[16/10] w-full overflow-hidden p-0'>
 					<CustomImage src={course.previewImage} alt={course.title} />
 				</CardContent>
-				<div className='my-4 flex flex-col space-y-2 px-2'>
-					<h2 className='line-clamp-1 font-space-grotesk text-2xl font-bold'>
+				<div className='flex flex-1 flex-col space-y-3 p-4'>
+					<h2 className='line-clamp-2 min-h-[64px] font-space-grotesk text-2xl font-bold leading-tight'>
 						{course.title}
 					</h2>
 					<Separator />
-					<div className='flex items-center justify-between'>
-						<div className='flex items-center gap-2'>
+					<div className='flex items-center justify-between gap-3'>
+						<div className='flex min-w-0 items-center gap-2'>
 							<div className='relative size-[40px]'>
 								<CustomImage
 									src={course.instructor.picture}
@@ -25,23 +36,19 @@ function CourseCard(course: ICourse) {
 									className='rounded-full'
 								/>
 							</div>
-							<p className='text-sm text-muted-foreground'>
+							<p className='line-clamp-2 text-sm leading-tight text-muted-foreground'>
 								{course.instructor.fullName}
 							</p>
 						</div>
 
-						<div className='flex gap-2'>
-							<div className='self-start font-space-grotesk text-xs text-muted-foreground line-through'>
-								{course.oldPrice.toLocaleString('en-US', {
-									style: 'currency',
-									currency: 'USD',
-								})}
-							</div>
-							<div className='font-space-grotesk text-sm font-bold'>
-								{course.currentPrice.toLocaleString('en-US', {
-									currency: 'USD',
-									style: 'currency',
-								})}
+						<div className='flex shrink-0 items-end gap-2'>
+							{oldPrice ? (
+								<div className='self-start font-space-grotesk text-xs text-muted-foreground line-through'>
+									{oldPrice}
+								</div>
+							) : null}
+							<div className='font-space-grotesk text-base font-bold'>
+								{currentPrice ?? 'Free'}
 							</div>
 						</div>
 					</div>

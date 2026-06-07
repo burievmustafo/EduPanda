@@ -7,17 +7,10 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
-export const Brand = {
-  primary: '#208AEF',
-  primaryLight: '#E8F4FF',
-  primaryDark: '#1570CC',
-  success: '#16a34a',
-  successLight: '#DCFCE7',
-  danger: '#dc2626',
-  dangerLight: '#FEE2E2',
-  warning: '#ea580c',
-  gold: '#d97706',
-} as const;
+import { Brand as DesignBrand, layout, spacing as designSpacing } from '@/design/tokens';
+
+/** @deprecated Prefer `@/design/tokens` — kept for existing screens */
+export const Brand = DesignBrand;
 
 export const Colors = {
   light: {
@@ -72,14 +65,16 @@ export const Fonts = Platform.select({
 });
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  half: designSpacing.xxs,
+  one: designSpacing.xs,
+  two: designSpacing.sm,
+  three: designSpacing.lg,
+  four: designSpacing['2xl'],
+  five: designSpacing['3xl'],
+  six: designSpacing['6xl'],
 } as const;
+
+export { layout as Layout } from '@/design/tokens';
 
 export const Radius = {
   sm: 6,

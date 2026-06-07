@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:mobile-catalog": "npx --yes tsx scripts/seed-mobile-catalog.ts",
+    "seed:edupanda": "npx --yes tsx scripts/seed-edupanda.ts"
   },
   "dependencies": {
     "@clerk/localizations": "^1.26.15",

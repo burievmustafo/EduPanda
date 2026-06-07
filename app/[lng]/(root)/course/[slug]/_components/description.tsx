@@ -24,6 +24,15 @@ interface Props {
 	course: ICourse
 	isPurchase: boolean
 }
+
+function formatUsd(price?: number | null) {
+	if (typeof price !== 'number' || Number.isNaN(price)) return null
+	return price.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	})
+}
+
 function Description({ course, isPurchase }: Props) {
 	const [isLoading, setIsLoading] = useState(false)
 
@@ -31,6 +40,8 @@ function Description({ course, isPurchase }: Props) {
 	const t = useTranslate()
 	const router = useRouter()
 	const { addToCart } = useCart()
+	const currentPrice = formatUsd(course.currentPrice)
+	const oldPrice = formatUsd(course.oldPrice)
 
 	const onCart = () => {
 		setIsLoading(true)
@@ -57,17 +68,9 @@ function Description({ course, isPurchase }: Props) {
 		<div className='rounded-md border bg-secondary/50 p-4 shadow-lg dark:shadow-white/20 lg:sticky lg:top-24 lg:p-6'>
 			<div className='flex items-center justify-between font-space-grotesk'>
 				<div className='text-2xl font-bold'>
-					{course.currentPrice.toLocaleString('en-US', {
-						style: 'currency',
-						currency: 'USD',
-					})}
+					{currentPrice ?? 'Free'}
 				</div>
-				<div className='font-bold line-through'>
-					{course.oldPrice.toLocaleString('en-US', {
-						style: 'currency',
-						currency: 'USD',
-					})}
-				</div>
+				{oldPrice ? <div className='font-bold line-through'>{oldPrice}</div> : null}
 			</div>
 
 			{isPurchase ? (

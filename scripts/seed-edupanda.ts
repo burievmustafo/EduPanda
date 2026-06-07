@@ -2,11 +2,11 @@
  * EduPanda demo seed.
  *
  * Bazaga demo kurs (HTML/CSS, en/ja), video timed savollar, section test va
- * teacher/student/parent foydalanuvchilarni yozadi. Idempotent — qayta yugurtirsa
+ * instructor/student foydalanuvchilarni yozadi. Idempotent — qayta yugurtirsa
  * eski demo o'chirib qaytadan yaratadi.
  *
  * Ishga tushirish (mobile EMAS, ildiz loyihada):
- *   npx ts-node --transpile-only scripts/seed-edupanda.ts
+ *   npm run seed:edupanda
  */
 
 import { loadEnvConfig } from '@next/env'
@@ -28,7 +28,6 @@ import Purchase from '../database/purchase.model'
 import TimedQuestion from '../database/timed-question.model'
 import SectionQuiz from '../database/section-quiz.model'
 import QuizQuestion from '../database/quiz-question.model'
-import ParentStudentLink from '../database/parent-student-link.model'
 
 const DEMO_VIDEO = 'https://www.youtube.com/watch?v=DPe_srf0GlI'
 const SLUG = 'edupanda-demo-web-basics'
@@ -76,8 +75,8 @@ async function seed() {
 	const teacher = await upsertUser(
 		'seed_teacher_edupanda',
 		'Sato Sensei',
-		'teacher',
-		'teacher@edupanda.demo'
+		'instructor',
+		'instructor@edupanda.demo'
 	)
 	const student = await upsertUser(
 		'seed_student_edupanda',
@@ -85,25 +84,6 @@ async function seed() {
 		'student',
 		'student@edupanda.demo'
 	)
-	const parent = await upsertUser(
-		'seed_parent_edupanda',
-		'Kenji Tanaka',
-		'parent',
-		'parent@edupanda.demo'
-	)
-
-	// 2) Parent ↔ student
-	await ParentStudentLink.findOneAndUpdate(
-		{ parent: parent._id, student: student._id },
-		{
-			parent: parent._id,
-			student: student._id,
-			status: 'active',
-			activatedAt: new Date(),
-		},
-		{ upsert: true }
-	)
-
 	// 3) Eski demoni tozalash
 	await cleanupOldDemo()
 
@@ -307,9 +287,8 @@ async function seed() {
 
 	console.log('\n✅ EduPanda seed muvaffaqiyatli:')
 	console.log('  course :', course._id.toString(), '(', SLUG, ')')
-	console.log('  teacher:', teacher._id.toString(), '(clerkId: seed_teacher_edupanda)')
+	console.log('  instructor:', teacher._id.toString(), '(clerkId: seed_teacher_edupanda)')
 	console.log('  student:', student._id.toString(), '(clerkId: seed_student_edupanda)')
-	console.log('  parent :', parent._id.toString(), '(clerkId: seed_parent_edupanda)')
 	console.log('  lessons: 2, timed questions: 4, quiz questions: 5\n')
 
 	await mongoose.disconnect()

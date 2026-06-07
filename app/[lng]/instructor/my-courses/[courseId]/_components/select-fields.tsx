@@ -21,7 +21,13 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { courseCategory, courseLanguage, courseLevels } from '@/constants'
+import {
+	courseLanguage,
+	courseLevels,
+	getCategoryFormValues,
+	resolveCourseCategory,
+} from '@/constants'
+import { CourseCategoryField } from '@/components/forms/course-category-field'
 import useToggleEdit from '@/hooks/use-toggle-edit'
 import { selectFieldsSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -86,18 +92,29 @@ function Forms({ course, onToggle }: FormsProps) {
 
 	const pathname = usePathname()
 
+	const categoryDefaults = getCategoryFormValues(course.category)
+
 	const form = useForm<z.infer<typeof selectFieldsSchema>>({
 		resolver: zodResolver(selectFieldsSchema),
 		defaultValues: {
 			level: course.level,
 			language: course.language,
-			category: course.category,
+			category: categoryDefaults.category,
+			categoryCustom: categoryDefaults.categoryCustom,
 		},
 	})
 
 	const onSubmit = (values: z.infer<typeof selectFieldsSchema>) => {
 		setIsLoading(true)
-		const promise = updateCourse(course._id, values, pathname)
+		const { categoryCustom, category, ...rest } = values
+		const promise = updateCourse(
+			course._id,
+			{
+				...rest,
+				category: resolveCourseCategory(category, categoryCustom),
+			},
+			pathname,
+		)
 			.then(() => onToggle())
 			.finally(() => setIsLoading(false))
 
@@ -143,35 +160,11 @@ function Forms({ course, onToggle }: FormsProps) {
 							</FormItem>
 						)}
 					/>
-					<FormField
+					<CourseCategoryField
 						control={form.control}
-						name='category'
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>
-									Category<span className='text-red-500'>*</span>
-								</FormLabel>
-								<FormControl>
-									<Select
-										defaultValue={field.value}
-										onValueChange={field.onChange}
-										disabled={isLoading}
-									>
-										<SelectTrigger className='w-full bg-secondary'>
-											<SelectValue placeholder={'Select'} />
-										</SelectTrigger>
-										<SelectContent>
-											{courseCategory.map(item => (
-												<SelectItem key={item} value={item}>
-													{item}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
+						categoryName='category'
+						customName='categoryCustom'
+						disabled={isLoading}
 					/>
 					<FormField
 						control={form.control}

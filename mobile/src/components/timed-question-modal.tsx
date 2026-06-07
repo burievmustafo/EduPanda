@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Button, BRAND } from '@/components/ui-button';
+import { AppButton } from '@/components/ui/app-button';
+import { AppText } from '@/components/ui/app-text';
+import { colors, radius, spacing } from '@/design/tokens';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { getPalette } from '@/design/theme';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/hooks/use-locale';
 import { tText } from '@/lib/localized';
 import { answerTimedQuestion } from '@/api/learning';
@@ -20,12 +21,19 @@ type Props = {
 
 export function TimedQuestionModal({ question, onResolved }: Props) {
   const { t } = useTranslation();
-  const theme = useTheme();
+  const scheme = useColorScheme();
+  const palette = getPalette(scheme === 'dark' ? 'dark' : 'light');
   const locale = useLocale();
 
   const [selected, setSelected] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<TimedAnswerResultDTO | null>(null);
+
+  useEffect(() => {
+    setSelected(null);
+    setResult(null);
+    setSubmitting(false);
+  }, [question?.id]);
 
   if (!question) return null;
 
@@ -57,27 +65,24 @@ export function TimedQuestionModal({ question, onResolved }: Props) {
   return (
     <Modal visible transparent animationType="slide" onRequestClose={handleContinue}>
       <View style={styles.backdrop}>
-        <ThemedView style={styles.sheet}>
-          <ThemedText type="small" style={styles.tag}>
+        <View style={[styles.sheet, { backgroundColor: palette.surface }]}>
+          <AppText variant="captionStrong" color="brand" style={styles.tag}>
             {t('question.title')}
-          </ThemedText>
-          <ThemedText type="subtitle" style={styles.question}>
-            {tText(question.question, locale)}
-          </ThemedText>
+          </AppText>
+          <AppText variant="h3">{tText(question.question, locale)}</AppText>
 
-          {/* Variantlar */}
           <View style={styles.options}>
             {question.options.map((opt) => {
               const isSelected = selected === opt.id;
               const isCorrect = result?.correctOptionId === opt.id;
               const isWrongPick = result && isSelected && !result.isCorrect;
 
-              let borderColor: string = theme.backgroundSelected;
+              let borderColor: string = palette.border;
               if (result) {
-                if (isCorrect) borderColor = '#16a34a';
-                else if (isWrongPick) borderColor = '#dc2626';
+                if (isCorrect) borderColor = colors.success;
+                else if (isWrongPick) borderColor = colors.danger;
               } else if (isSelected) {
-                borderColor = BRAND;
+                borderColor = colors.primary;
               }
 
               return (
@@ -85,67 +90,68 @@ export function TimedQuestionModal({ question, onResolved }: Props) {
                   key={opt.id}
                   disabled={Boolean(result)}
                   onPress={() => setSelected(opt.id)}
-                  style={[styles.option, { borderColor, backgroundColor: theme.backgroundElement }]}>
-                  <ThemedText>{tText(opt.text, locale)}</ThemedText>
+                  style={[
+                    styles.option,
+                    { borderColor, backgroundColor: palette.surfaceMuted },
+                  ]}>
+                  <AppText variant="body">{tText(opt.text, locale)}</AppText>
                 </Pressable>
               );
             })}
           </View>
 
-          {/* Natija (javobdan keyin) */}
           {result ? (
             <View style={styles.resultBox}>
-              <ThemedText
-                type="smallBold"
-                style={{ color: result.isCorrect ? '#16a34a' : '#dc2626' }}>
+              <AppText variant="bodyStrong" color={result.isCorrect ? 'success' : 'danger'}>
                 {result.isCorrect ? t('question.correct') : t('question.incorrect')}
-              </ThemedText>
+              </AppText>
               {result.explanation ? (
-                <ThemedText type="small" style={styles.muted}>
+                <AppText variant="caption" color="secondary">
                   {tText(result.explanation, locale)}
-                </ThemedText>
+                </AppText>
               ) : null}
-              <Button title={t('question.continueVideo')} onPress={handleContinue} style={styles.cta} />
+              <AppButton title={t('question.continueVideo')} onPress={handleContinue} />
             </View>
           ) : (
             <View style={styles.actions}>
-              <Button
-                title={t('common.skip')}
-                variant="secondary"
-                onPress={() => handleSubmit(true)}
-                style={styles.flex}
-                disabled={submitting}
-              />
-              <Button
+              {!question.required ? (
+                <AppButton
+                  title={t('common.skip')}
+                  variant="outline"
+                  onPress={() => handleSubmit(true)}
+                  fullWidth={false}
+                  style={styles.flex}
+                  disabled={submitting}
+                />
+              ) : null}
+              <AppButton
                 title={t('common.submit')}
                 onPress={() => handleSubmit(false)}
+                fullWidth={false}
                 style={styles.flex}
                 loading={submitting}
                 disabled={!selected}
               />
             </View>
           )}
-        </ThemedView>
+        </View>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: colors.overlayDark },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: Spacing.four,
-    gap: Spacing.three,
+    borderTopLeftRadius: radius['2xl'],
+    borderTopRightRadius: radius['2xl'],
+    padding: spacing['2xl'],
+    gap: spacing.lg,
   },
-  tag: { textTransform: 'uppercase', color: BRAND, letterSpacing: 1 },
-  question: { fontSize: 24, lineHeight: 32 },
-  options: { gap: Spacing.two },
-  option: { borderWidth: 2, borderRadius: 12, padding: Spacing.three },
-  actions: { flexDirection: 'row', gap: Spacing.two },
+  tag: { textTransform: 'uppercase', letterSpacing: 1 },
+  options: { gap: spacing.md },
+  option: { borderWidth: 2, borderRadius: radius.lg, padding: spacing.lg },
+  actions: { flexDirection: 'row', gap: spacing.md },
   flex: { flex: 1 },
-  resultBox: { gap: Spacing.two },
-  muted: { opacity: 0.8 },
-  cta: { marginTop: Spacing.two },
+  resultBox: { gap: spacing.md },
 });

@@ -1,152 +1,231 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useUser } from '@clerk/clerk-expo'
+import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
+import { useTranslation } from 'react-i18next'
+import {
+	ActivityIndicator,
+	Alert,
+	Image,
+	Pressable,
+	ScrollView,
+	StyleSheet,
+	View,
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { createStudentInviteCode } from '@/api/me';
-import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BRAND, Button } from '@/components/ui-button';
-import { Brand, Radius, Shadow, Spacing } from '@/constants/theme';
-import { useMe, useStudentDashboard } from '@/hooks/queries';
-import { useTheme } from '@/hooks/use-theme';
-import { useSession } from '@/store/session-store';
+import { AppText } from '@/components/ui/app-text'
+import { useFigmaTheme, type FigmaTheme } from '@/design/figma-theme'
+import { colors, spacing } from '@/design/tokens'
+import { useMe } from '@/hooks/queries'
+import { logOutToSplash } from '@/lib/auth-logout'
+import { resolveProfilePictureUri } from '@/lib/profile-picture'
+
+type ProfileMenuItem = {
+	icon: keyof typeof Ionicons.glyphMap
+	title: string
+	onPress: () => void
+	danger?: boolean
+}
 
 export default function ProfileTab() {
-  const { t } = useTranslation();
-  const role = useSession((s) => s.role);
-  const theme = useTheme();
-  const { data: me, isLoading } = useMe();
-  const { data: dashboard } = useStudentDashboard();
+	const { t } = useTranslation()
+	const insets = useSafeAreaInsets()
+	const theme = useFigmaTheme()
+	const { data: me, isLoading } = useMe()
+	const { user: clerkUser } = useUser()
 
-  const [inviteCode, setInviteCode] = useState('');
-  const [inviteLoading, setInviteLoading] = useState(false);
+	const avatarUri = resolveProfilePictureUri(me?.picture, clerkUser?.imageUrl)
 
-  const roleLabel =
-    role === 'teacher' ? t('role.teacher') : role === 'parent' ? t('role.parent') : t('role.student');
+	const items: ProfileMenuItem[] = [
+		{
+			icon: 'card',
+			title: t('profile.paymentMethod'),
+			onPress: () => router.push('/profile/payment-method'),
+		},
+		{
+			icon: 'desktop',
+			title: t('profile.myCertificates'),
+			onPress: () => router.push('/profile/certificates'),
+		},
+		{
+			icon: 'settings-outline',
+			title: t('settings.title'),
+			onPress: () => router.push('/profile/help-center'),
+		},
+		{
+			icon: 'paper-plane',
+			title: t('profile.inviteFriends'),
+			onPress: () => router.push('/profile/invite-friends'),
+		},
+		{
+			icon: 'log-out',
+			title: t('settings.logOut'),
+			danger: true,
+			onPress: () => {
+				Alert.alert(t('settings.logOut'), t('settings.logOutConfirm'), [
+					{ text: t('common.back'), style: 'cancel' },
+					{
+						text: t('settings.logOut'),
+						style: 'destructive',
+						onPress: () => void logOutToSplash(router),
+					},
+				])
+			},
+		},
+	]
 
-  const completedLessons = dashboard?.inProgress.reduce((s, c) => s + c.completedLessons, 0) ?? 0;
-  const totalAttempts = dashboard?.recentAttempts.length ?? 0;
+	return (
+		<View style={[styles.screen, { paddingTop: insets.top, backgroundColor: theme.background }]}>
+			<ScrollView
+				contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]}
+				showsVerticalScrollIndicator={false}>
+				<AppText variant="title" style={[styles.title, { color: theme.heading }]}>
+					{t('profile.myProfile')}
+				</AppText>
 
-  return (
-    <Screen>
-      {/* Settings button */}
-      <View style={styles.topRow}>
-        <ThemedText style={styles.pageTitle}>Profile</ThemedText>
-        <Pressable onPress={() => router.push('/settings')} style={styles.settingsBtn}>
-          <Ionicons name="settings-outline" size={22} color={theme.textSecondary} />
-        </Pressable>
-      </View>
+				{isLoading ? (
+					<View style={styles.loading}>
+						<ActivityIndicator color={theme.accent} />
+					</View>
+				) : (
+					<>
+						<View style={styles.identityBlock}>
+							<Pressable
+								onPress={() => router.push('/profile/edit')}
+								style={({ pressed }) => [styles.avatar, pressed && styles.pressed]}
+								accessibilityRole="button">
+								{avatarUri ? (
+									<Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+								) : (
+									<AppText variant="h2" style={styles.avatarLetter}>
+										{getInitials(me?.fullName)}
+									</AppText>
+								)}
+							</Pressable>
 
-      {!isLoading && (
-        <>
-          {/* Avatar + info */}
-          <ThemedView style={[styles.card, Shadow.sm, { backgroundColor: theme.backgroundCard }]}>
-            <View style={styles.avatarRow}>
-              <View style={[styles.avatar, { backgroundColor: Brand.primary }]}>
-                <ThemedText style={styles.avatarLetter}>
-                  {(me?.fullName?.[0] ?? '?').toUpperCase()}
-                </ThemedText>
-              </View>
-              <View style={styles.info}>
-                <ThemedText style={styles.name}>{me?.fullName || '—'}</ThemedText>
-                <ThemedText style={styles.email}>{me?.email || ''}</ThemedText>
-                <View style={[styles.roleBadge, { backgroundColor: Brand.primaryLight }]}>
-                  <ThemedText style={[styles.roleText, { color: Brand.primary }]}>
-                    {roleLabel.toUpperCase()}
-                  </ThemedText>
-                </View>
-              </View>
-            </View>
+							<View style={styles.identityText}>
+								<AppText variant="title" style={[styles.name, { color: theme.heading }]} numberOfLines={1}>
+									{me?.fullName || '—'}
+								</AppText>
+								<AppText variant="caption" style={[styles.email, { color: theme.textMuted }]} numberOfLines={1}>
+									{me?.email || ''}
+								</AppText>
+							</View>
 
-            {/* Stats */}
-            {role === 'student' && (
-              <View style={[styles.statsRow, { borderTopColor: theme.border }]}>
-                <Stat label="Lessons done" value={`${completedLessons}`} />
-                <StatDivider />
-                <Stat label="Quiz attempts" value={`${totalAttempts}`} />
-                <StatDivider />
-                <Stat label="Courses" value={`${dashboard?.inProgress.length ?? 0}`} />
-              </View>
-            )}
-          </ThemedView>
+							<Pressable
+								onPress={() => router.push('/profile/edit')}
+								hitSlop={12}
+								style={styles.editButton}
+								accessibilityRole="button"
+								accessibilityLabel={t('profile.editProfile')}>
+								<Ionicons name="pencil" size={24} color={theme.accent} />
+							</Pressable>
+						</View>
 
-          {/* Invite code (student only) */}
-          {role === 'student' && (
-            <ThemedView style={[styles.inviteCard, { backgroundColor: theme.backgroundCard }]}>
-              <ThemedText style={styles.inviteTitle}>{t('profile.inviteCode')}</ThemedText>
-              <ThemedText style={styles.inviteHint}>{t('profile.shareCode')}</ThemedText>
-              {inviteCode ? (
-                <ThemedText style={[styles.codeText, { color: Brand.primary }]}>{inviteCode}</ThemedText>
-              ) : null}
-              <Button
-                title={t('profile.generateInviteCode')}
-                variant="secondary"
-                loading={inviteLoading}
-                onPress={async () => {
-                  setInviteLoading(true);
-                  try {
-                    const res = await createStudentInviteCode();
-                    setInviteCode(res.code);
-                  } finally {
-                    setInviteLoading(false);
-                  }
-                }}
-              />
-            </ThemedView>
-          )}
+						<View style={[styles.divider, { backgroundColor: theme.progressTrack }]} />
 
-          {/* Switch role */}
-          <Button
-            title={t('profile.switchRole')}
-            variant="ghost"
-            onPress={() => router.replace('/')}
-          />
+						<View style={styles.menu}>
+							{items.map((item) => (
+								<MenuRow key={item.title} item={item} theme={theme} />
+							))}
+						</View>
+					</>
+				)}
 
-          <ThemedText style={styles.about}>{t('profile.about')}</ThemedText>
-        </>
-      )}
-    </Screen>
-  );
+				<View style={styles.footer}>
+					<AppText variant="small" style={[styles.footerText, { color: theme.textMuted }]}>
+						{t('profile.privacyPolicy')} · {t('profile.terms')}
+					</AppText>
+				</View>
+			</ScrollView>
+		</View>
+	)
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <ThemedText style={styles.statValue}>{value}</ThemedText>
-      <ThemedText style={styles.statLabel}>{label}</ThemedText>
-    </View>
-  );
+function MenuRow({ item, theme }: { item: ProfileMenuItem; theme: FigmaTheme }) {
+	const color = item.danger ? theme.danger : theme.heading
+
+	return (
+		<Pressable
+			onPress={item.onPress}
+			style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
+			accessibilityRole="button">
+			<Ionicons name={item.icon} size={21} color={theme.accent} style={styles.menuIcon} />
+			<AppText variant="bodyStrong" style={[styles.menuTitle, { color }]}>
+				{item.title}
+			</AppText>
+			<Ionicons name="chevron-forward" size={24} color={theme.accent} />
+		</Pressable>
+	)
 }
 
-function StatDivider() {
-  const theme = useTheme();
-  return <View style={[styles.statDivider, { backgroundColor: theme.border }]} />;
+function getInitials(name?: string | null): string {
+	if (!name) return '?'
+	const parts = name.trim().split(/\s+/)
+	if (parts.length >= 2) return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase()
+	return (parts[0]?.[0] ?? '?').toUpperCase()
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.three },
-  pageTitle: { fontSize: 28, fontWeight: '800' },
-  settingsBtn: { padding: 4 },
-  card: { borderRadius: Radius.lg, overflow: 'hidden', marginBottom: Spacing.two },
-  avatarRow: { flexDirection: 'row', gap: Spacing.three, padding: Spacing.three, alignItems: 'center' },
-  avatar: { width: 68, height: 68, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
-  avatarLetter: { fontSize: 28, fontWeight: '800', color: '#fff' },
-  info: { flex: 1, gap: 4 },
-  name: { fontSize: 20, fontWeight: '700' },
-  email: { fontSize: 13, opacity: 0.6 },
-  roleBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: Radius.pill, marginTop: 4 },
-  roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  statsRow: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: Spacing.two },
-  stat: { flex: 1, alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 22, fontWeight: '800', color: BRAND },
-  statLabel: { fontSize: 11, opacity: 0.6 },
-  statDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch' },
-  inviteCard: { borderRadius: Radius.lg, padding: Spacing.three, gap: Spacing.two, marginBottom: Spacing.two },
-  inviteTitle: { fontSize: 16, fontWeight: '700' },
-  inviteHint: { fontSize: 13, opacity: 0.65 },
-  codeText: { fontSize: 36, fontWeight: '800', letterSpacing: 5, textAlign: 'center', paddingVertical: Spacing.two },
-  about: { opacity: 0.4, textAlign: 'center', marginTop: Spacing.four, fontSize: 12 },
-});
+	screen: { flex: 1 },
+	content: {
+		flexGrow: 1,
+		paddingHorizontal: 28,
+		paddingTop: spacing.lg,
+	},
+	title: {
+		fontSize: 24,
+		lineHeight: 32,
+		fontWeight: '800',
+		marginBottom: 42,
+	},
+	loading: { paddingVertical: spacing['4xl'] },
+	identityBlock: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginBottom: 28,
+	},
+	avatar: {
+		width: 100,
+		height: 100,
+		borderRadius: 50,
+		backgroundColor: colors.primary,
+		alignItems: 'center',
+		justifyContent: 'center',
+		overflow: 'hidden',
+	},
+	avatarImage: { width: '100%', height: '100%' },
+	avatarLetter: { color: colors.white, fontWeight: '800' },
+	identityText: { flex: 1, marginLeft: spacing.md },
+	name: { fontSize: 18, lineHeight: 24, fontWeight: '800' },
+	email: { fontSize: 14, marginTop: 2 },
+	editButton: {
+		width: 44,
+		height: 44,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	divider: { height: StyleSheet.hairlineWidth, marginBottom: 26 },
+	menu: { gap: 28 },
+	menuRow: {
+		minHeight: 32,
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	menuIcon: { width: 30, marginRight: spacing.lg },
+	menuTitle: {
+		flex: 1,
+		fontSize: 16,
+		lineHeight: 22,
+		fontWeight: '800',
+		letterSpacing: 0.15,
+	},
+	footer: {
+		flex: 1,
+		justifyContent: 'flex-end',
+		alignItems: 'center',
+		paddingTop: spacing['5xl'],
+	},
+	footerText: { fontSize: 12 },
+	pressed: { opacity: 0.86 },
+})

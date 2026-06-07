@@ -18,14 +18,19 @@ export const connectToDatabase = async () => {
 	mongoose.set('strictQuery', true)
 
 	if (!process.env.MONGODB_URL) {
-		return console.log('MISSING MONGODB_URL')
+		throw new Error('MISSING MONGODB_URL')
 	}
 
-	if (isConnected) {
+	if (isConnected || mongoose.connection.readyState === 1) {
+		isConnected = true
 		return
 	}
 
 	try {
+		if (mongoose.connection.readyState !== 0) {
+			await mongoose.disconnect()
+		}
+
 		const options: ConnectOptions = {
 			dbName: process.env.MONGODB_DB,
 			autoCreate: true,
@@ -36,5 +41,6 @@ export const connectToDatabase = async () => {
 	} catch (error) {
 		console.error('MongoDB connection failed:', error)
 		isConnected = false
+		throw error
 	}
 }

@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs'
 import Link from 'next/link'
 import { connectToDatabase } from '@/lib/mongoose'
 import Course from '@/database/course.model'
-import { mapRole } from '@/lib/mobile/api'
 import User from '@/database/user.model'
 import Purchase from '@/database/purchase.model'
 

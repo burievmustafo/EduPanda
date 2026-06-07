@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@clerk/nextjs'
 import { CheckedState } from '@radix-ui/react-checkbox'
-import { PlayCircle } from 'lucide-react'
+import { ListChecks, Lock, PlayCircle } from 'lucide-react'
 import Link from 'next/link'
 import {
 	useParams,
@@ -26,8 +26,9 @@ import { useEffect, useState } from 'react'
 
 interface Props {
 	sections: ISection[]
+	quizSectionIds: string[]
 }
-function Sections({ sections }: Props) {
+function Sections({ sections, quizSectionIds }: Props) {
 	const [mount, setMount] = useState(false)
 
 	const searchParams = useSearchParams()
@@ -67,7 +68,11 @@ function Sections({ sections }: Props) {
 			onValueChange={onSelect}
 		>
 			{sections.map(section => (
-				<SectionList key={section._id} {...section} />
+				<SectionList
+					key={section._id}
+					{...section}
+					hasQuiz={quizSectionIds.includes(section._id)}
+				/>
 			))}
 		</Accordion>
 	) : (
@@ -81,9 +86,19 @@ function Sections({ sections }: Props) {
 
 export default Sections
 
-function SectionList(section: ISection) {
+function SectionList({
+	hasQuiz,
+	...section
+}: ISection & { hasQuiz: boolean }) {
 	const { get } = useSearchParams()
 	const sectionId = get('s')
+	const { lng, courseId } = useParams()
+
+	const lessonsCompleted =
+		section.lessons.length > 0 &&
+		section.lessons.every(lesson =>
+			lesson.userProgress.map(p => p.lessonId).includes(lesson._id)
+		)
 
 	return (
 		<AccordionItem value={section._id} className='mt-1'>
@@ -104,6 +119,25 @@ function SectionList(section: ISection) {
 						sectionId={section._id}
 					/>
 				))}
+
+				{hasQuiz &&
+					(lessonsCompleted ? (
+						<Link
+							href={`/${lng}/dashboard/${courseId}/quiz/${section._id}`}
+							className='mx-auto mt-2 flex h-12 w-[calc(100%-12px)] items-center gap-x-2 rounded-none px-3 text-sm font-medium text-primary hover:bg-secondary'
+						>
+							<ListChecks size={16} />
+							Take section quiz
+						</Link>
+					) : (
+						<div
+							className='mx-auto mt-2 flex h-12 w-[calc(100%-12px)] cursor-not-allowed items-center gap-x-2 rounded-none px-3 text-sm text-muted-foreground'
+							title='Complete all lessons to unlock the quiz'
+						>
+							<Lock size={16} />
+							Section quiz (locked)
+						</div>
+					))}
 			</AccordionContent>
 		</AccordionItem>
 	)

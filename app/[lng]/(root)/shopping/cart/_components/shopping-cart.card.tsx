@@ -7,8 +7,20 @@ import Image from 'next/image'
 interface Props extends ICourse {
 	quantity: number
 }
+
+function formatUsd(price?: number | null) {
+	if (typeof price !== 'number' || Number.isNaN(price)) return null
+	return price.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	})
+}
+
 function ShoppingCartCard(item: Props) {
 	const { removeFromCart } = useCart()
+	const unitPrice = typeof item.currentPrice === 'number' ? item.currentPrice : 0
+	const totalPrice = formatUsd(unitPrice * item.quantity)
+	const currentPrice = formatUsd(item.currentPrice)
 
 	return (
 		<div className='grid w-full grid-cols-3 gap-4 rounded-md p-4 shadow-md dark:shadow-sm dark:shadow-white max-md:grid-cols-1'>
@@ -26,10 +38,7 @@ function ShoppingCartCard(item: Props) {
 						{item.description}
 					</p>
 					<h1 className='font-space-grotesk font-bold md:hidden'>
-						{(item.currentPrice * item.quantity).toLocaleString('en-US', {
-							style: 'currency',
-							currency: 'USD',
-						})}
+						{totalPrice ?? 'Free'}
 					</h1>
 				</div>
 			</div>
@@ -57,10 +66,7 @@ function ShoppingCartCard(item: Props) {
 					</div>
 				</div> */}
 				<h1 className='font-space-grotesk text-xl font-bold max-md:hidden'>
-					{item.currentPrice.toLocaleString('en-US', {
-						style: 'currency',
-						currency: 'USD',
-					})}
+					{currentPrice ?? 'Free'}
 				</h1>
 				<Button
 					variant={'destructive'}

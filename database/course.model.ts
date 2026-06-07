@@ -21,6 +21,13 @@ const CourseSchema = new Schema(
 		instructor: { type: Schema.Types.ObjectId, ref: 'User' },
 		slug: String,
 		tags: String,
+		resources: [
+			{
+				title: String,
+				url: String,
+				type: { type: String, enum: ['link', 'file'], default: 'link' },
+			},
+		],
 		purchases: [{ type: Schema.Types.ObjectId, ref: 'Purchase' }],
 	},
 	{ timestamps: true }

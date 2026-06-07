@@ -19,6 +19,7 @@ i18n.use(initReactI18next).init({
   },
   lng: detectLocale(),
   fallbackLng: 'en',
+  compatibilityJSON: 'v3',
   interpolation: { escapeValue: false },
 });
 

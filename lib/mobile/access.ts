@@ -22,7 +22,28 @@ export async function hasLessonAccess(
 	role: Role
 ): Promise<boolean> {
 	if (lesson?.free) return true
+
 	const section = await Section.findById(lesson.section).select('course').lean()
 	if (!section) return false
-	return hasCourseAccess((section as any).course, userId, role)
+
+	const course = await Course.findById((section as any).course)
+		.select('published instructor')
+		.lean()
+	if (!course) return false
+
+	if (role === 'admin' || String((course as any).instructor) === String(userId)) {
+		return true
+	}
+
+	if (await hasCourseAccess((section as any).course, userId, role)) {
+		return true
+	}
+
+	// Public preview on published courses: free lessons or any lesson with a video.
+	if ((course as any).published) {
+		if (lesson?.free) return true
+		if (lesson?.videoUrl?.trim()) return true
+	}
+
+	return false
 }

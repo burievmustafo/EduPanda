@@ -1,4 +1,20 @@
+import { COURSE_CATEGORY_OTHER } from '@/constants'
 import { z } from 'zod'
+
+const categoryCustomRule = (
+	data: { category: string; categoryCustom?: string },
+	ctx: z.RefinementCtx,
+) => {
+	if (data.category !== COURSE_CATEGORY_OTHER) return
+	const custom = data.categoryCustom?.trim() ?? ''
+	if (custom.length < 2) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ['categoryCustom'],
+			message: 'Enter a category name (at least 2 characters)',
+		})
+	}
+}
 
 export const contactSchema = z.object({
 	message: z.string().min(10),
@@ -6,17 +22,20 @@ export const contactSchema = z.object({
 	name: z.string().min(3),
 })
 
-export const courseSchema = z.object({
-	title: z.string().min(3),
-	description: z.string().min(10),
-	learning: z.string(),
-	requirements: z.string(),
-	level: z.string(),
-	language: z.string(),
-	category: z.string(),
-	oldPrice: z.string().min(0),
-	currentPrice: z.string().min(0),
-})
+export const courseSchema = z
+	.object({
+		title: z.string().min(3),
+		description: z.string().min(10),
+		learning: z.string(),
+		requirements: z.string(),
+		level: z.string(),
+		language: z.string(),
+		category: z.string(),
+		categoryCustom: z.string().optional(),
+		oldPrice: z.string().min(0),
+		currentPrice: z.string().min(0),
+	})
+	.superRefine(categoryCustomRule)
 
 export const courseFieldsSchema = z.object({
 	title: z.string().min(3),
@@ -33,11 +52,14 @@ export const informationSchema = z.object({
 	tags: z.string(),
 })
 
-export const selectFieldsSchema = z.object({
-	level: z.string(),
-	language: z.string(),
-	category: z.string(),
-})
+export const selectFieldsSchema = z
+	.object({
+		level: z.string(),
+		language: z.string(),
+		category: z.string(),
+		categoryCustom: z.string().optional(),
+	})
+	.superRefine(categoryCustomRule)
 
 export const priceSchema = z.object({
 	oldPrice: z.string(),
@@ -56,6 +78,18 @@ export const lessonSchema = z.object({
 	minutes: z.string(),
 	seconds: z.string(),
 	free: z.boolean().default(false).optional(),
+})
+
+export const questionSchema = z.object({
+	language: z.enum(['en', 'ja']).default('en'),
+	triggerTimeSec: z.string().optional(),
+	question: z.string().min(3),
+	option1: z.string().min(1),
+	option2: z.string().min(1),
+	option3: z.string().min(1),
+	option4: z.string().min(1),
+	correct: z.enum(['a', 'b', 'c', 'd']),
+	explanation: z.string().optional(),
 })
 
 export const profileSchema = z.object({

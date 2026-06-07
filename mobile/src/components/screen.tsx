@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { BRAND } from '@/components/ui-button';
+import { colors, layout } from '@/design/tokens';
 
 type ScreenProps = {
   children: ReactNode;
@@ -34,7 +34,7 @@ export function Screen({
             keyboardShouldPersistTaps="handled"
             refreshControl={
               onRefresh ? (
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={BRAND} colors={[BRAND]} />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />
               ) : undefined
             }>
             {children}
@@ -62,7 +62,11 @@ export function LoadingState({ label }: { label?: string }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { padding: Spacing.three, gap: Spacing.three },
+  content: {
+    paddingHorizontal: layout.screenPaddingHorizontal,
+    paddingVertical: Spacing.three,
+    gap: Spacing.three,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.four },
   muted: { opacity: 0.7 },
 });

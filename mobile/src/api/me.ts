@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from '@/api/client';
+import { apiGet, apiPatch, apiPost } from '@/api/client';
 import type { UserRole } from '@/types/dto';
 
 export type Me = {
@@ -12,8 +12,13 @@ export type Me = {
 
 export const getMe = () => apiGet<Me>('/me');
 
-export const createStudentInviteCode = () =>
-  apiPost<{ code: string }>('/student/invite-code', {});
+export type UpdateMeInput = {
+  fullName: string;
+  email: string;
+};
 
-export const linkParentChild = (code: string) =>
-  apiPost<{ studentId: string; fullName: string; picture?: string }>('/parent/link', { code });
+export const updateMe = (input: UpdateMeInput) =>
+  apiPatch<Me>('/me', input);
+
+export const uploadProfileAvatar = (imageBase64: string) =>
+  apiPost<Me>('/me/avatar', { imageBase64 });

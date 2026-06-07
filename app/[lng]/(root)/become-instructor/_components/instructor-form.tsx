@@ -18,6 +18,7 @@ import ThirdForm from './third-form'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import useTranslate from '@/hooks/use-translate'
 import { sendNotification } from '@/actions/notification.action'
 
@@ -27,6 +28,8 @@ function InstructorForm() {
 	const [loading, setLoading] = useState(false)
 
 	const { userId } = useAuth()
+	const params = useParams()
+	const lng = typeof params.lng === 'string' ? params.lng : 'en'
 	const t = useTranslate()
 
 	const firstForm = () => {
@@ -86,16 +89,17 @@ function InstructorForm() {
 		const onSubmit = async (values: z.infer<typeof bioSchema>) => {
 			setLoading(true)
 
-			const upd = updateUser({
-				clerkId: userId!,
-				updatedData: { ...values, approvedInstructor: true },
-			})
-				.then(() => setStep(4))
-				.finally(() => setLoading(false))
-
-			const not = sendNotification(userId!, 'messageInstructorApproved')
-
-			return Promise.all([upd, not])
+			try {
+				await updateUser({
+					clerkId: userId!,
+					updatedData: { ...values, approvedInstructor: true },
+					path: `/${lng}/admin/instructors`,
+				})
+				await sendNotification(userId!, 'messageInstructorApproved')
+				setStep(4)
+			} finally {
+				setLoading(false)
+			}
 		}
 
 		return (

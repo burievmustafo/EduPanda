@@ -22,6 +22,7 @@ function FeaturedCourses({ courses }: Props) {
 	const t = useTranslate()
 	const searchParams = useSearchParams()
 	const router = useRouter()
+	const singleCourse = courses.length === 1
 
 	const onUpdateParams = (value: string) => {
 		const newUrl = formUrlQuery({
@@ -73,7 +74,11 @@ function FeaturedCourses({ courses }: Props) {
 					{courses.map(course => (
 						<CarouselItem
 							key={course.title}
-							className='md:basis-1/2 lg:basis-1/3'
+							className={cn(
+								singleCourse
+									? 'md:basis-[340px] lg:basis-[360px]'
+									: 'md:basis-1/2 lg:basis-1/3'
+							)}
 						>
 							<CourseCard {...course} />
 						</CarouselItem>

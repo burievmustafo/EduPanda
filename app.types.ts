@@ -1,11 +1,18 @@
 import { LucideIcon } from 'lucide-react'
 
+export interface ICourseResource {
+	title: string
+	url: string
+	type?: 'link' | 'file'
+}
+
 export interface ICourse {
 	_id: string
 	title: string
 	description: string
 	learning: string
 	requirements: string
+	resources?: ICourseResource[]
 	level: string
 	category: string
 	language: string
@@ -52,6 +59,42 @@ export interface IUserProgress {
 	userId: string
 	lessonId: string
 	isCompleted: string
+}
+
+export interface ILocalizedText {
+	en: string
+	ja?: string
+}
+
+export interface IQuestionOption {
+	id: string
+	text: ILocalizedText
+}
+
+export interface IQuizQuestion {
+	_id: string
+	question: ILocalizedText
+	options: IQuestionOption[]
+	correctOptionId: string
+	explanation?: ILocalizedText
+	order: number
+}
+
+export interface ISectionQuiz {
+	_id: string
+	section: string
+	title: ILocalizedText
+	passScore: number
+}
+
+export interface ITimedQuestion {
+	_id: string
+	lesson: string
+	triggerTimeSec: number
+	question: ILocalizedText
+	options: IQuestionOption[]
+	correctOptionId: string
+	explanation?: ILocalizedText
 }
 
 export interface IUser {

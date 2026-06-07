@@ -5,8 +5,11 @@ type L = { en?: string; ja?: string } | undefined
 
 /** i18n maydonni afzal ko'radi, bo'sh bo'lsa oddiy String'ga fallback. */
 export function li18n(i18n: L, plain?: string): { en: string; ja?: string } {
-	const en = i18n?.en && i18n.en.trim() ? i18n.en : plain ?? ''
-	const ja = i18n?.ja && i18n.ja.trim() ? i18n.ja : undefined
+	const enRaw = i18n?.en?.trim()
+	const jaRaw = i18n?.ja?.trim()
+	const plainRaw = plain?.trim()
+	const en = enRaw || plainRaw || jaRaw || ''
+	const ja = jaRaw || undefined
 	return ja ? { en, ja } : { en }
 }
 
@@ -25,9 +28,15 @@ export function toCourseDTO(
 		id: String(course._id),
 		title: li18n(course.titleI18n, course.title),
 		description: li18n(course.descriptionI18n, course.description),
+		learning: li18n(course.learningI18n, course.learning),
+		requirements: li18n(course.requirementsI18n, course.requirements),
 		previewImage: course.previewImage || undefined,
 		level: course.level || '',
 		category: course.category || '',
+		language: course.language || undefined,
+		currentPrice:
+			typeof course.currentPrice === 'number' ? course.currentPrice : undefined,
+		oldPrice: typeof course.oldPrice === 'number' ? course.oldPrice : undefined,
 		instructor: {
 			id: String(course.instructor?._id || course.instructor || ''),
 			fullName: course.instructor?.fullName || '',

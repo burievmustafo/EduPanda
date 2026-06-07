@@ -1,10 +1,11 @@
 import { ActivityIndicator, Pressable, StyleSheet, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { colors, layout, radius, spacing } from '@/design/tokens';
 import { useTheme } from '@/hooks/use-theme';
 
-export const BRAND = '#208AEF';
+/** @deprecated Use `colors.primary` from `@/design/tokens` */
+export const BRAND = colors.primary;
 
 type ButtonProps = {
   title: string;
@@ -18,7 +19,7 @@ type ButtonProps = {
 export function Button({ title, onPress, variant = 'primary', disabled, loading, style }: ButtonProps) {
   const theme = useTheme();
   const bg =
-    variant === 'primary' ? BRAND : variant === 'secondary' ? theme.backgroundElement : 'transparent';
+    variant === 'primary' ? colors.primary : variant === 'secondary' ? theme.backgroundElement : 'transparent';
   const color = variant === 'primary' ? '#ffffff' : theme.text;
 
   return (
@@ -41,12 +42,12 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
 
 const styles = StyleSheet.create({
   btn: {
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: 12,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing['2xl'],
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: layout.primaryButtonHeight,
   },
   text: { fontSize: 16, fontWeight: '600' },
 });

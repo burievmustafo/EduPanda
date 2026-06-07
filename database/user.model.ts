@@ -14,7 +14,7 @@ const UserSchema = new Schema(
 		github: String,
 		youtube: String,
 		customerId: String,
-		role: { type: String, default: 'user' },
+		role: { type: String, default: 'student' },
 		isAdmin: { type: Boolean, default: false },
 		approvedInstructor: { type: Boolean, default: false },
 		favouriteCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],

@@ -1,403 +1,403 @@
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'
+import { Stack, router, useLocalSearchParams } from 'expo-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ScrollView, StyleSheet, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { getLesson, getSections, saveLessonProgress } from '@/api/learning';
-import { LessonVideo, VideoFrame } from '@/components/lesson-video';
-import { LoadingState, Screen } from '@/components/screen';
-import { TextField } from '@/components/text-field';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { TimedQuestionModal } from '@/components/timed-question-modal';
-import { BRAND, Button } from '@/components/ui-button';
-import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
-import { useLocale } from '@/hooks/use-locale';
-import { useTheme } from '@/hooks/use-theme';
-import { formatTime, tText } from '@/lib/localized';
-import type {
-  LessonDetailDTO,
-  LessonListItemDTO,
-  SectionDTO,
-  TimedQuestionDTO,
-  WatchedRange,
-} from '@/types/dto';
+import { completeLesson, saveLessonProgress } from '@/api/learning'
+import {
+	LearningVideoPlayerShell,
+	LessonBottomNavigation,
+	LessonTabs,
+	NoteEditorSheet,
+	NotesPanel,
+	type LessonNote,
+	type LessonPanelTab,
+} from '@/components/lesson'
+import { TimedQuestionModal } from '@/components/timed-question-modal'
+import { ListSkeleton } from '@/components/skeleton'
+import { AppCard } from '@/components/ui/app-card'
+import { AppText } from '@/components/ui/app-text'
+import { useFigmaTheme } from '@/design/figma-theme'
+import { layout, radius, spacing } from '@/design/tokens'
+import { useQueryClient } from '@tanstack/react-query'
 
-type LessonTab = 'transcript' | 'notes' | 'files';
+import { AppButton } from '@/components/ui/app-button'
+import { useLesson, useSections } from '@/hooks/queries'
+import { useLocale } from '@/hooks/use-locale'
+import { getLearningFlow } from '@/lib/lesson-flow'
+import { formatTime, tText } from '@/lib/localized'
+import { stripHtml } from '@/lib/strip-html'
+import type { LessonDetailDTO, TimedQuestionDTO, WatchedRange } from '@/types/dto'
 
 export default function LearnScreen() {
-  const { lessonId } = useLocalSearchParams<{ lessonId: string }>();
-  const { t } = useTranslation();
-  const { data: lesson, loading } = useAsync(() => getLesson(lessonId), [lessonId]);
+	const { lessonId } = useLocalSearchParams<{ lessonId: string }>()
+	const { t } = useTranslation()
+	const { data: lesson, isLoading } = useLesson(lessonId)
 
-  if (loading || !lesson) {
-    return (
-      <Screen>
-        <LoadingState label={t('common.loading')} />
-      </Screen>
-    );
-  }
+	if (isLoading || !lesson) {
+		return (
+			<View style={styles.loading}>
+				<ListSkeleton count={2} />
+			</View>
+		)
+	}
 
-  return <LessonContent key={lesson.id} lesson={lesson} />;
+	return <LessonPlayer key={lesson.id} lesson={lesson} />
 }
 
-function LessonContent({ lesson }: { lesson: LessonDetailDTO }) {
-  const { t } = useTranslation();
-  const locale = useLocale();
-  const answeredIds = lesson.answeredQuestionIds ?? [];
+function LessonPlayer({ lesson }: { lesson: LessonDetailDTO }) {
+	const { t } = useTranslation()
+	const locale = useLocale()
+	const insets = useSafeAreaInsets()
+	const theme = useFigmaTheme()
+	const answeredIds = lesson.answeredQuestionIds ?? []
 
-  const [activeQuestion, setActiveQuestion] = useState<TimedQuestionDTO | null>(null);
-  const [videoPaused, setVideoPaused] = useState<boolean | undefined>(undefined);
-  const [watchedPercent, setWatchedPercent] = useState(lesson.progress?.watchedPercent ?? 0);
-  const [currentTimeSec, setCurrentTimeSec] = useState(lesson.progress?.lastPositionSec ?? 0);
-  const [activeTab, setActiveTab] = useState<LessonTab>('transcript');
-  const [noteDraft, setNoteDraft] = useState('');
-  const [notes, setNotes] = useState<Array<{ id: string; timeSec: number; text: string }>>([]);
-  const { data: sections } = useAsync(() => getSections(lesson.courseId), [lesson.courseId, watchedPercent]);
+	const [activeQuestion, setActiveQuestion] = useState<TimedQuestionDTO | null>(null)
+	const [videoPaused, setVideoPaused] = useState<boolean | undefined>(undefined)
+	const [watchedPercent, setWatchedPercent] = useState(lesson.progress?.watchedPercent ?? 0)
+	const [seekToSec, setSeekToSec] = useState<number | undefined>(undefined)
+	const [activeTab, setActiveTab] = useState<LessonPanelTab>('overview')
+	const [noteDraft, setNoteDraft] = useState('')
+	const [notes, setNotes] = useState<LessonNote[]>([])
+	const [noteSheetOpen, setNoteSheetOpen] = useState(false)
+	const [isCompleted, setIsCompleted] = useState(lesson.progress?.isCompleted ?? false)
+	const [completing, setCompleting] = useState(false)
+	const playbackRate = 1
 
-  const activeRef = useRef(false);
-  const shownRef = useRef<Set<string>>(new Set(answeredIds));
-  const rangesRef = useRef<WatchedRange[]>([]);
-  const lastTimeRef = useRef(lesson.progress?.lastPositionSec ?? 0);
-  const lastSyncRef = useRef(lesson.progress?.lastPositionSec ?? 0);
-  const savingRef = useRef(false);
+	const queryClient = useQueryClient()
+	const { data: sections } = useSections(lesson.courseId)
 
-  const flow = getLearningFlow(sections, lesson, watchedPercent);
+	const activeRef = useRef(false)
+	const shownRef = useRef<Set<string>>(new Set(answeredIds))
+	const rangesRef = useRef<WatchedRange[]>([])
+	const lastTimeRef = useRef(lesson.progress?.lastPositionSec ?? 0)
+	const lastSyncRef = useRef(lesson.progress?.lastPositionSec ?? 0)
+	const savingRef = useRef(false)
 
-  function handleTime(currentTime: number) {
-    const canTriggerQuestions = Boolean(lesson.videoUrl) && lesson.durationSec > 0 && currentTime > 0.75;
-    const last = lastTimeRef.current;
-    const delta = currentTime - last;
+	const flow = getLearningFlow(sections, lesson, watchedPercent)
+	const bottomPad = layout.tabBarHeight + Math.max(insets.bottom, spacing.md) + spacing.lg
+	const lessonTitle = tText(lesson.title, locale) || t('lesson.untitledLesson')
+	const sectionTitle = flow.sectionTitle ? tText(flow.sectionTitle, locale) : ''
+	const lessonContent = stripHtml(tText(lesson.content, locale))
 
-    if (delta > 0 && delta < 1.5) {
-      rangesRef.current.push({ start: last, end: currentTime });
-    }
+	const panelTabs = useMemo(
+		() => [
+			{ key: 'overview' as const, label: t('lesson.overview') },
+			{ key: 'notes' as const, label: t('lesson.notes') },
+		],
+		[t],
+	)
 
-    lastTimeRef.current = currentTime;
-    setCurrentTimeSec(currentTime);
+	function handleTime(currentTime: number) {
+		const canTriggerQuestions =
+			Boolean(lesson.videoUrl) && lesson.durationSec > 0 && currentTime > 0.75
+		const last = lastTimeRef.current
+		const delta = currentTime - last
 
-    if (currentTime - lastSyncRef.current >= 15) {
-      lastSyncRef.current = currentTime;
-      void persist();
-    }
+		if (delta > 0 && delta < 1.5) {
+			rangesRef.current.push({ start: last, end: currentTime })
+		}
 
-    if (canTriggerQuestions && !activeRef.current) {
-      const candidate = lesson.timedQuestions.find(
-        (question) =>
-          question.triggerTimeSec > 0 &&
-          currentTime >= question.triggerTimeSec &&
-          !shownRef.current.has(question.id)
-      );
+		lastTimeRef.current = currentTime
 
-      if (candidate) {
-        shownRef.current.add(candidate.id);
-        activeRef.current = true;
-        setVideoPaused(true);
-        setActiveQuestion(candidate);
-      }
-    }
-  }
+		if (currentTime - lastSyncRef.current >= 15) {
+			lastSyncRef.current = currentTime
+			void persist()
+		}
 
-  async function persist() {
-    if (savingRef.current || rangesRef.current.length === 0) return;
+		if (canTriggerQuestions && !activeRef.current) {
+			const candidate = lesson.timedQuestions.find(
+				(question) =>
+					question.triggerTimeSec > 0 &&
+					currentTime >= question.triggerTimeSec &&
+					!shownRef.current.has(question.id),
+			)
 
-    savingRef.current = true;
-    const ranges = rangesRef.current;
-    rangesRef.current = [];
+			if (candidate) {
+				shownRef.current.add(candidate.id)
+				activeRef.current = true
+				setVideoPaused(true)
+				setActiveQuestion(candidate)
+			}
+		}
+	}
 
-    try {
-      const result = await saveLessonProgress(lesson.id, {
-        watchedRanges: ranges,
-        lastPositionSec: lastTimeRef.current,
-      });
-      setWatchedPercent(result.watchedPercent);
-    } finally {
-      savingRef.current = false;
-    }
-  }
+	async function persist() {
+		if (savingRef.current || rangesRef.current.length === 0) return
 
-  useEffect(() => () => void persist(), []);
+		savingRef.current = true
+		const ranges = rangesRef.current
+		rangesRef.current = []
 
-  const handleResolved = () => {
-    activeRef.current = false;
-    setActiveQuestion(null);
-    setVideoPaused(false);
-  };
+		try {
+			const result = await saveLessonProgress(lesson.id, {
+				watchedRanges: ranges,
+				lastPositionSec: lastTimeRef.current,
+			})
+			setWatchedPercent(result.watchedPercent)
+		} finally {
+			savingRef.current = false
+		}
+	}
 
-  const goToQuiz = () => {
-    void persist();
-    router.push({ pathname: '/quiz/[sectionId]', params: { sectionId: lesson.sectionId } });
-  };
+	useEffect(() => () => void persist(), [])
 
-  const goToNext = () => {
-    void persist();
-    if (!flow.nextItem) return;
+	const handleResolved = () => {
+		activeRef.current = false
+		setActiveQuestion(null)
+		setVideoPaused(false)
+	}
 
-    if (flow.nextItem.type === 'lesson') {
-      router.push({ pathname: '/learn/[lessonId]', params: { lessonId: flow.nextItem.id } });
-    } else {
-      router.push({ pathname: '/quiz/[sectionId]', params: { sectionId: flow.nextItem.id } });
-    }
-  };
+	const seek = (timeSec: number) => {
+		setSeekToSec(timeSec)
+		lastTimeRef.current = timeSec
+		setTimeout(() => setSeekToSec(undefined), 300)
+	}
 
-  const addNote = () => {
-    if (!noteDraft.trim()) return;
+	const navigateNext = (nextFlow: ReturnType<typeof getLearningFlow>) => {
+		if (!nextFlow.nextItem) return
+		if (nextFlow.nextItem.type === 'lesson') {
+			router.push({ pathname: '/learn/[lessonId]', params: { lessonId: nextFlow.nextItem.id } })
+		} else {
+			router.push({ pathname: '/quiz/[sectionId]', params: { sectionId: nextFlow.nextItem.id } })
+		}
+	}
 
-    setNotes((prev) => [
-      { id: `${Date.now()}`, timeSec: Math.round(lastTimeRef.current), text: noteDraft.trim() },
-      ...prev,
-    ]);
-    setNoteDraft('');
-  };
+	const goToNext = () => {
+		void persist()
+		navigateNext(flow)
+	}
 
-  return (
-    <ThemedView style={styles.flex}>
-      <Stack.Screen options={{ title: tText(lesson.title, locale) }} />
+	const handleCompleteLesson = async () => {
+		if (isCompleted || completing) return
+		setCompleting(true)
+		try {
+			await persist()
+			const result = await completeLesson(lesson.id)
+			setIsCompleted(result.isCompleted)
+			setWatchedPercent((prev) => Math.max(prev, result.watchedPercent))
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ['lesson', lesson.id] }),
+				queryClient.invalidateQueries({ queryKey: ['sections', lesson.courseId] }),
+				queryClient.invalidateQueries({ queryKey: ['studentDashboard'] }),
+			])
+			navigateNext(getLearningFlow(sections, lesson, 100))
+		} finally {
+			setCompleting(false)
+		}
+	}
 
-      <View style={styles.videoWrap}>
-        <VideoFrame>
-          <LessonVideo
-            url={lesson.videoUrl}
-            paused={videoPaused}
-            enableTimeTracking
-            onTimeUpdate={handleTime}
-            onPause={() => void persist()}
-          />
-        </VideoFrame>
-      </View>
+	const saveNote = () => {
+		if (!noteDraft.trim()) return
+		setNotes((prev) => [
+			{ id: `${Date.now()}`, timeSec: Math.round(lastTimeRef.current), text: noteDraft.trim() },
+			...prev,
+		])
+		setNoteDraft('')
+		setNoteSheetOpen(false)
+		setActiveTab('notes')
+	}
 
-      <Screen>
-        <ThemedText style={styles.title}>{tText(lesson.title, locale)}</ThemedText>
+	const nextDisabled =
+		!flow.nextItem || (flow.nextItem.type === 'quiz' && !flow.quizUnlocked)
 
-        <ThemedView type="backgroundElement" style={styles.statusCard}>
-          <View style={styles.statusTop}>
-            <ThemedText type="smallBold">
-              {flow.completedItems}/{flow.totalItems} {t('lesson.learningItems')}
-            </ThemedText>
-            <ThemedText type="small" style={styles.muted}>
-              {formatTime(currentTimeSec)} / {formatTime(lesson.durationSec)}
-            </ThemedText>
-          </View>
+	return (
+		<View style={[styles.root, { backgroundColor: theme.background }]}>
+			<Stack.Screen
+				options={{
+					title: lessonTitle,
+					headerStyle: { backgroundColor: theme.background },
+					headerTintColor: theme.heading,
+					headerShadowVisible: false,
+				}}
+			/>
 
-          <LearningProgressBar
-            durationSec={lesson.durationSec}
-            currentTimeSec={currentTimeSec}
-            watchedPercent={watchedPercent}
-            questions={lesson.timedQuestions}
-            answeredQuestionIds={answeredIds}
-          />
+			<LearningVideoPlayerShell
+				url={lesson.videoUrl}
+				paused={videoPaused}
+				enableTimeTracking={Boolean(lesson.videoUrl)}
+				seekToSec={seekToSec}
+				playbackRate={playbackRate}
+				onTimeUpdate={handleTime}
+				onPause={() => void persist()}
+			/>
 
-          <View style={styles.statusTop}>
-            <ThemedText type="small" style={styles.muted}>
-              {watchedPercent}% {t('lesson.watched')}
-            </ThemedText>
-            <ThemedText type="small" style={{ color: flow.quizUnlocked ? '#16a34a' : '#dc2626' }}>
-              {flow.quizUnlocked ? t('lesson.unlockedQuiz') : t('lesson.completeToUnlockQuiz')}
-            </ThemedText>
-          </View>
-        </ThemedView>
+			<ScrollView
+				contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad }]}
+				keyboardShouldPersistTaps="handled">
+				<View style={styles.titleBlock}>
+					<View style={styles.titleRow}>
+						<View style={styles.titleTextCol}>
+							<AppText variant="h2" style={{ color: theme.heading }}>
+								{lessonTitle}
+							</AppText>
+							{sectionTitle ? (
+								<AppText variant="body" style={{ color: theme.textMuted }}>
+									{sectionTitle}
+								</AppText>
+							) : null}
+						</View>
+						<AppButton
+							title={
+								isCompleted ? t('lesson.completed') : t('lesson.completeLesson')
+							}
+							onPress={() => void handleCompleteLesson()}
+							loading={completing}
+							disabled={isCompleted}
+							fullWidth={false}
+							compact
+							style={styles.completeBtn}
+						/>
+					</View>
+				</View>
 
-        <View style={styles.tabRow}>
-          {(['transcript', 'notes', 'files'] as const).map((tab) => (
-            <Pressable
-              key={tab}
-              onPress={() => setActiveTab(tab)}
-              style={[styles.tab, activeTab === tab && styles.tabActive]}>
-              <ThemedText type="smallBold" style={activeTab === tab ? styles.tabActiveText : undefined}>
-                {t(`lesson.${tab}`)}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
+				<LessonTabs tabs={panelTabs} active={activeTab} onChange={setActiveTab} />
 
-        {activeTab === 'transcript' ? (
-          <ThemedView type="backgroundElement" style={styles.panel}>
-            <ThemedText type="smallBold">{t('lesson.transcript')}</ThemedText>
-            <ThemedText style={styles.muted}>{tText(lesson.content, locale)}</ThemedText>
-          </ThemedView>
-        ) : null}
+				{activeTab === 'overview' ? (
+					<AppCard
+						style={[
+							styles.overviewCard,
+							{
+								backgroundColor: theme.surface,
+								borderColor: theme.cardBorder,
+							},
+						]}>
+						<AppText variant="bodyStrong" style={{ color: theme.heading }}>
+							{t('course.aboutCourse')}
+						</AppText>
+						<AppText variant="body" style={[styles.overviewText, { color: theme.textMuted }]}>
+							{lessonContent || t('lesson.noOverview')}
+						</AppText>
+						<View style={styles.metaGrid}>
+							<LessonMetaPill
+								label={t('lesson.lectureVideo')}
+								value={formatTime(lesson.durationSec)}
+								icon="play-circle-outline"
+							/>
+							<LessonMetaPill
+								label={t('lesson.timedQuestions')}
+								value={`${lesson.timedQuestions.length}`}
+								icon="help-circle-outline"
+							/>
+							<LessonMetaPill
+								label={t('lesson.watched')}
+								value={isCompleted ? t('lesson.completed') : `${watchedPercent}%`}
+								icon="checkmark-circle-outline"
+							/>
+						</View>
+					</AppCard>
+				) : null}
 
-        {activeTab === 'notes' ? (
-          <ThemedView type="backgroundElement" style={styles.panel}>
-            <ThemedText type="smallBold">{t('lesson.addNote')}</ThemedText>
-            <TextField placeholder={t('lesson.notePlaceholder')} value={noteDraft} onChangeText={setNoteDraft} multiline />
-            <Button title={t('lesson.addNote')} variant="secondary" onPress={addNote} disabled={!noteDraft.trim()} />
-            {notes.length > 0 ? (
-              notes.map((note) => (
-                <Pressable
-                  key={note.id}
-                  onPress={() => setCurrentTimeSec(note.timeSec)}
-                  style={styles.noteItem}>
-                  <ThemedText type="smallBold">{formatTime(note.timeSec)}</ThemedText>
-                  <ThemedText type="small" style={styles.muted}>
-                    {note.text}
-                  </ThemedText>
-                </Pressable>
-              ))
-            ) : (
-              <ThemedText type="small" style={styles.muted}>
-                {t('lesson.noNotes')}
-              </ThemedText>
-            )}
-          </ThemedView>
-        ) : null}
+				{activeTab === 'notes' ? (
+					<NotesPanel
+						notes={notes}
+						emptyTitle={t('lesson.noNotes')}
+						emptyDescription={t('lesson.noNotesHint')}
+						onSeekNote={seek}
+					/>
+				) : null}
+			</ScrollView>
 
-        {activeTab === 'files' ? (
-          <ThemedView type="backgroundElement" style={styles.panel}>
-            <ThemedText type="smallBold">{t('lesson.resources')}</ThemedText>
-            <ResourceRow label={t('lesson.lectureVideo')} value={formatTime(lesson.durationSec)} />
-            <ResourceRow label={t('lesson.transcriptFile')} value={locale.toUpperCase()} />
-            <ResourceRow label={t('lesson.timedQuestions')} value={`${lesson.timedQuestions.length}`} />
-          </ThemedView>
-        ) : null}
+			<View style={styles.bottomFixed}>
+				<LessonBottomNavigation
+					backLabel={t('common.back')}
+					noteLabel={t('lesson.notes')}
+					nextLabel={
+						flow.nextItem?.type === 'lesson'
+							? t('lesson.nextLesson')
+							: t('lesson.nextItem')
+					}
+					onBack={() => {
+						void persist()
+						router.back()
+					}}
+					onNote={() => setNoteSheetOpen(true)}
+					onNext={goToNext}
+					nextDisabled={nextDisabled}
+				/>
+			</View>
 
-        <View style={styles.actions}>
-          <Button
-            title={flow.nextItem?.type === 'lesson' ? t('lesson.nextLesson') : t('lesson.nextItem')}
-            onPress={goToNext}
-            disabled={!flow.nextItem || (flow.nextItem.type === 'quiz' && !flow.quizUnlocked)}
-            style={styles.actionButton}
-          />
-          <Button
-            title={t('course.sectionQuiz')}
-            variant="secondary"
-            onPress={goToQuiz}
-            disabled={!flow.quizUnlocked}
-            style={styles.actionButton}
-          />
-        </View>
-      </Screen>
-
-      <TimedQuestionModal question={activeQuestion} onResolved={handleResolved} />
-    </ThemedView>
-  );
+			<TimedQuestionModal question={activeQuestion} onResolved={handleResolved} />
+			<NoteEditorSheet
+				visible={noteSheetOpen}
+				timeSec={Math.round(lastTimeRef.current)}
+				value={noteDraft}
+				onChangeText={setNoteDraft}
+				onSave={saveNote}
+				onClose={() => setNoteSheetOpen(false)}
+			/>
+		</View>
+	)
 }
 
-function LearningProgressBar({
-  durationSec,
-  currentTimeSec,
-  watchedPercent,
-  questions,
-  answeredQuestionIds,
+function LessonMetaPill({
+	label,
+	value,
+	icon,
 }: {
-  durationSec: number;
-  currentTimeSec: number;
-  watchedPercent: number;
-  questions: TimedQuestionDTO[];
-  answeredQuestionIds: string[];
+	label: string
+	value: string
+	icon: keyof typeof Ionicons.glyphMap
 }) {
-  const theme = useTheme();
-  const watched = Math.min(100, Math.max(0, watchedPercent));
-  const current = durationSec > 0 ? Math.min(100, Math.max(0, (currentTimeSec / durationSec) * 100)) : 0;
+	const theme = useFigmaTheme()
 
-  return (
-    <View style={[styles.barBg, { backgroundColor: theme.backgroundSelected }]}>
-      <View style={[styles.barFill, { width: `${watched}%` }]} />
-      <View style={[styles.playhead, { left: `${current}%` }]} />
-      {questions.map((question) => {
-        const left =
-          durationSec > 0 ? Math.min(100, Math.max(0, (question.triggerTimeSec / durationSec) * 100)) : 0;
-        const answered = answeredQuestionIds.includes(question.id);
-
-        return (
-          <View
-            key={question.id}
-            style={[
-              styles.questionMarker,
-              { left: `${left}%`, backgroundColor: answered ? '#16a34a' : '#f59e0b' },
-            ]}
-          />
-        );
-      })}
-    </View>
-  );
-}
-
-function ResourceRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.resourceRow}>
-      <ThemedText>{label}</ThemedText>
-      <ThemedText type="small" style={styles.muted}>
-        {value}
-      </ThemedText>
-    </View>
-  );
-}
-
-function getLearningFlow(sections: SectionDTO[] | undefined, lesson: LessonDetailDTO, watchedPercent: number) {
-  const allLessons: LessonListItemDTO[] = sections?.flatMap((section) => section.lessons) ?? [];
-  const totalLessons = allLessons.length || 1;
-  const completedLessons = allLessons.filter((item) =>
-    item.id === lesson.id ? watchedPercent >= 90 || Boolean(item.progress?.isCompleted) : Boolean(item.progress?.isCompleted)
-  ).length;
-  const currentSection = sections?.find((section) => section.id === lesson.sectionId);
-  const sectionLessons = currentSection?.lessons ?? [];
-  const currentIndex = sectionLessons.findIndex((item) => item.id === lesson.id);
-  const nextLesson = currentIndex >= 0 ? sectionLessons[currentIndex + 1] : undefined;
-  const quizUnlocked = sectionLessons.length
-    ? sectionLessons.every((item) =>
-        item.id === lesson.id ? watchedPercent >= 90 || Boolean(item.progress?.isCompleted) : Boolean(item.progress?.isCompleted)
-      )
-    : watchedPercent >= 90;
-  const nextItem = nextLesson
-    ? { type: 'lesson' as const, id: nextLesson.id }
-    : currentSection?.hasQuiz
-      ? { type: 'quiz' as const, id: currentSection.id }
-      : undefined;
-
-  return {
-    totalItems: totalLessons + (sections?.filter((section) => section.hasQuiz).length ?? 0),
-    completedItems: completedLessons,
-    quizUnlocked,
-    nextItem,
-  };
+	return (
+		<View style={[styles.metaPill, { backgroundColor: theme.notificationCardBg }]}>
+			<AppText variant="small" style={{ color: theme.textMuted }}>
+				{label}
+			</AppText>
+			<View style={styles.metaValueRow}>
+				<Ionicons name={icon} size={16} color={theme.accent} />
+				<AppText variant="captionStrong" style={{ color: theme.heading }}>
+					{value}
+				</AppText>
+			</View>
+		</View>
+	)
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  videoWrap: { width: '100%', aspectRatio: 16 / 9, backgroundColor: '#000000' },
-  video: { width: '100%', height: '100%' },
-  title: { fontSize: 22, fontWeight: '700', lineHeight: 28 },
-  statusCard: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
-  statusTop: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
-  muted: { opacity: 0.75 },
-  barBg: { height: 10, borderRadius: 5, marginTop: Spacing.one, position: 'relative' },
-  barFill: { height: 10, borderRadius: 5, backgroundColor: BRAND },
-  playhead: { position: 'absolute', top: -3, width: 2, height: 16, backgroundColor: '#ffffff' },
-  questionMarker: {
-    position: 'absolute',
-    top: -4,
-    width: 10,
-    height: 18,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  tabRow: { flexDirection: 'row', gap: Spacing.two },
-  tab: {
-    flex: 1,
-    borderRadius: 999,
-    paddingVertical: Spacing.two,
-    alignItems: 'center',
-    backgroundColor: 'rgba(128,128,128,0.12)',
-  },
-  tabActive: { backgroundColor: 'rgba(32,138,239,0.18)' },
-  tabActiveText: { color: BRAND },
-  panel: { borderRadius: 16, padding: Spacing.three, gap: Spacing.two },
-  noteItem: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128,128,128,0.25)',
-    paddingTop: Spacing.two,
-    gap: 2,
-  },
-  resourceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(128,128,128,0.25)',
-    paddingTop: Spacing.two,
-  },
-  actions: { flexDirection: 'row', gap: Spacing.two },
-  actionButton: { flex: 1 },
-});
+	root: { flex: 1 },
+	loading: {
+		flex: 1,
+		paddingHorizontal: layout.screenPaddingHorizontal,
+		paddingTop: spacing['2xl'],
+	},
+	scroll: {
+		paddingHorizontal: layout.screenPaddingHorizontal,
+		paddingTop: spacing['2xl'],
+		gap: spacing.lg,
+	},
+	titleBlock: { gap: spacing.xs },
+	titleRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		gap: spacing.sm,
+	},
+	titleTextCol: { flex: 1, gap: spacing.xs },
+	completeBtn: { flexShrink: 0 },
+	overviewCard: { gap: spacing.md, borderRadius: radius.xl },
+	overviewText: { lineHeight: 23 },
+	metaGrid: {
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		gap: spacing.sm,
+		marginTop: spacing.xs,
+	},
+	metaPill: {
+		minWidth: '47%',
+		borderRadius: radius.lg,
+		padding: spacing.md,
+		gap: spacing.xs,
+	},
+	metaValueRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+	bottomFixed: {
+		position: 'absolute',
+		left: 0,
+		right: 0,
+		bottom: 0,
+	},
+})

@@ -1,96 +1,210 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import {
+	ActivityIndicator,
+	Alert,
+	Pressable,
+	RefreshControl,
+	ScrollView,
+	StyleSheet,
+	View,
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Screen } from '@/components/screen';
-import { ListSkeleton } from '@/components/skeleton';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BRAND } from '@/components/ui-button';
-import { Spacing } from '@/constants/theme';
-import { useStudentDashboard } from '@/hooks/queries';
-import { useLocale } from '@/hooks/use-locale';
-import { useTheme } from '@/hooks/use-theme';
-import { tText } from '@/lib/localized';
+import {
+	MyCoursesHeader,
+	MyCoursesProgressCard,
+	MyCoursesSavedCard,
+	MyCoursesSegment,
+} from '@/components/my-courses'
+import { AppEmptyState } from '@/components/ui/app-empty-state'
+import { AppText } from '@/components/ui/app-text'
+import { useFigmaTheme } from '@/design/figma-theme'
+import { spacing } from '@/design/tokens'
+import { useCourses, useStudentDashboard } from '@/hooks/queries'
+import { useLocale } from '@/hooks/use-locale'
+import {
+	buildCompletedRows,
+	buildInProgressRows,
+	buildSavedRows,
+	getDefaultSavedSeed,
+	type MyCoursesTab,
+} from '@/lib/my-courses-data'
+import { useSavedCourses } from '@/store/saved-courses-store'
 
 export default function LearningTab() {
-  const { t } = useTranslation();
-  const locale = useLocale();
-  const { data, isLoading, refetch, isRefetching } = useStudentDashboard();
-  useFocusEffect(useCallback(() => void refetch(), [refetch]));
+	const { t } = useTranslation()
+	const locale = useLocale()
+	const insets = useSafeAreaInsets()
+	const theme = useFigmaTheme()
+	const [tab, setTab] = useState<MyCoursesTab>('saved')
 
-  return (
-    <Screen onRefresh={refetch} refreshing={isRefetching}>
-      {isLoading ? (
-        <ListSkeleton count={2} />
-      ) : data ? (
-        <>
-          <ThemedText type="smallBold" style={styles.heading}>
-            {t('dashboard.progress')}
-          </ThemedText>
-          {data.inProgress.length > 0 ? (
-            data.inProgress.map((c) => (
-              <ThemedView key={c.courseId} type="backgroundElement" style={styles.card}>
-                <ThemedText style={styles.title}>{tText(c.title, locale)}</ThemedText>
-                <ProgressBar percent={c.percent} />
-                <ThemedText type="small" style={styles.muted}>
-                  {c.completedLessons}/{c.totalLessons} {t('dashboard.lessons')} · {c.percent}%
-                </ThemedText>
-              </ThemedView>
-            ))
-          ) : (
-            <ThemedText style={styles.muted}>{t('dashboard.noData')}</ThemedText>
-          )}
+	const { data: dashboard, isLoading: dashLoading, refetch, isRefetching } =
+		useStudentDashboard()
+	const { data: courses, isLoading: coursesLoading } = useCourses()
+	const savedIds = useSavedCourses((s) => s.ids)
+	const hydrated = useSavedCourses((s) => s.hydrated)
+	const hydrateSaved = useSavedCourses((s) => s.hydrate)
+	const seedIfEmpty = useSavedCourses((s) => s.seedIfEmpty)
 
-          <ThemedText type="smallBold" style={styles.heading}>
-            {t('dashboard.recentResults')}
-          </ThemedText>
-          {data.recentAttempts.length > 0 ? (
-            data.recentAttempts.map((a) => (
-              <ThemedView key={a.attemptId} type="backgroundElement" style={styles.attemptRow}>
-                <ThemedText style={styles.flex} numberOfLines={1}>
-                  {tText(a.quizTitle, locale)}
-                </ThemedText>
-                <ThemedText type="smallBold" style={{ color: a.passed ? '#16a34a' : '#dc2626' }}>
-                  {a.score}% {a.passed ? '✅' : '❌'}
-                </ThemedText>
-              </ThemedView>
-            ))
-          ) : (
-            <ThemedText style={styles.muted}>{t('dashboard.noData')}</ThemedText>
-          )}
-        </>
-      ) : (
-        <ThemedText style={styles.muted}>{t('dashboard.noData')}</ThemedText>
-      )}
-    </Screen>
-  );
-}
+	useFocusEffect(
+		useCallback(() => {
+			void refetch()
+			void hydrateSaved().then(() => {
+				if (courses?.length) {
+					void seedIfEmpty(getDefaultSavedSeed(courses))
+				}
+			})
+		}, [refetch, hydrateSaved, seedIfEmpty, courses]),
+	)
 
-function ProgressBar({ percent }: { percent: number }) {
-  const theme = useTheme();
-  const clamped = Math.min(100, Math.max(0, percent));
-  return (
-    <View style={[styles.barBg, { backgroundColor: theme.backgroundSelected }]}>
-      <View style={[styles.barFill, { width: `${clamped}%` }]} />
-    </View>
-  );
+	const inProgressRows = useMemo(
+		() => buildInProgressRows(dashboard?.inProgress ?? [], courses, locale),
+		[dashboard?.inProgress, courses, locale],
+	)
+	const completedRows = useMemo(
+		() => buildCompletedRows(dashboard?.inProgress ?? [], courses, locale),
+		[dashboard?.inProgress, courses, locale],
+	)
+	const savedRows = useMemo(
+		() => buildSavedRows(savedIds, courses, locale),
+		[savedIds, courses, locale],
+	)
+
+	const rows =
+		tab === 'saved' ? savedRows : tab === 'inProgress' ? inProgressRows : completedRows
+
+	const isLoading = dashLoading || coursesLoading || !hydrated
+	const openCourse = (courseId: string) =>
+		router.push({ pathname: '/course/[courseId]', params: { courseId } })
+
+	const emptyTitle =
+		tab === 'saved'
+			? t('myCourses.emptySavedTitle')
+			: tab === 'inProgress'
+				? t('myCourses.emptyInProgressTitle')
+				: t('myCourses.emptyCompletedTitle')
+	const emptyDesc =
+		tab === 'saved'
+			? t('myCourses.emptySavedDesc')
+			: tab === 'inProgress'
+				? t('myCourses.emptyInProgressDesc')
+				: t('myCourses.emptyCompletedDesc')
+
+	return (
+		<View style={[styles.screen, { backgroundColor: theme.background }]}>
+			<MyCoursesHeader onNotificationsPress={() => router.push('/notifications')} />
+			<View style={styles.segmentWrap}>
+				<MyCoursesSegment active={tab} onChange={setTab} />
+			</View>
+
+			<ScrollView
+				style={styles.scroll}
+				contentContainerStyle={[
+					styles.scrollContent,
+					{ paddingBottom: insets.bottom + spacing['3xl'] + 72 },
+				]}
+				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefetching}
+						onRefresh={() => void refetch()}
+						tintColor={theme.accent}
+						colors={[theme.accent]}
+					/>
+				}>
+				{isLoading ? (
+					<ActivityIndicator
+						style={styles.loader}
+						color={theme.accent}
+						size="large"
+					/>
+				) : rows.length === 0 ? (
+					<AppEmptyState
+						title={emptyTitle}
+						description={emptyDesc}
+						actionLabel={t('myCourses.exploreMore')}
+						onAction={() => router.push('/home')}
+						style={styles.empty}
+					/>
+				) : (
+					rows.map((row) => {
+						if (tab === 'saved') {
+							return (
+								<MyCoursesSavedCard
+									key={row.courseId}
+									row={row}
+									onPress={() => openCourse(row.courseId)}
+									onEnroll={() => openCourse(row.courseId)}
+								/>
+							)
+						}
+						return (
+							<MyCoursesProgressCard
+								key={row.courseId}
+								row={row}
+								variant={tab === 'inProgress' ? 'inProgress' : 'completed'}
+								onPress={() => openCourse(row.courseId)}
+								onCertificate={() =>
+									Alert.alert(
+										t('myCourses.viewCertificate'),
+										t('myCourses.certificateSoon'),
+									)
+								}
+							/>
+						)
+					})
+				)}
+
+				{rows.length > 0 ? (
+					<Pressable
+						onPress={() => router.push('/home')}
+						style={styles.exploreWrap}
+						accessibilityRole="link">
+						<AppText variant="body" style={[styles.exploreLink, { color: theme.exploreLink }]}>
+							{t('myCourses.exploreMore')}
+						</AppText>
+					</Pressable>
+				) : null}
+			</ScrollView>
+		</View>
+	)
 }
 
 const styles = StyleSheet.create({
-  heading: { marginTop: Spacing.two, opacity: 0.8 },
-  card: { borderRadius: 14, padding: Spacing.three, gap: Spacing.one },
-  title: { fontSize: 16, fontWeight: '700' },
-  muted: { opacity: 0.7 },
-  attemptRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    borderRadius: 12,
-    padding: Spacing.three,
-  },
-  flex: { flex: 1 },
-  barBg: { height: 8, borderRadius: 4, overflow: 'hidden', marginTop: 2 },
-  barFill: { height: 8, borderRadius: 4, backgroundColor: BRAND },
-});
+	screen: {
+		flex: 1,
+	},
+	segmentWrap: {
+		flexGrow: 0,
+		flexShrink: 0,
+	},
+	scroll: { flex: 1 },
+	scrollContent: {
+		flexGrow: 0,
+		paddingTop: spacing.sm,
+	},
+	empty: {
+		paddingTop: spacing['2xl'],
+		paddingBottom: spacing.lg,
+		alignItems: 'flex-start',
+		paddingHorizontal: spacing.lg,
+	},
+	loader: {
+		marginTop: spacing.xl,
+		alignSelf: 'center',
+	},
+	exploreWrap: {
+		alignItems: 'center',
+		marginTop: spacing.md,
+		marginBottom: spacing.lg,
+		paddingVertical: spacing.sm,
+	},
+	exploreLink: {
+		fontSize: 12,
+		fontWeight: '600',
+		textDecorationLine: 'underline',
+		letterSpacing: 0.6,
+	},
+})

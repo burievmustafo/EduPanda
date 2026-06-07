@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs'
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { connectToDatabase } from '@/lib/mongoose'
 import Course from '@/database/course.model'
 import Section from '@/database/section.model'
@@ -75,7 +75,8 @@ async function getData(courseId: string, clerkId: string | null) {
 }
 
 function fmt(sec: number) {
-	const m = Math.floor(sec / 60), s = sec % 60
+	const m = Math.floor(sec / 60)
+	const s = sec % 60
 	return `${m}:${s.toString().padStart(2, '0')}`
 }
 

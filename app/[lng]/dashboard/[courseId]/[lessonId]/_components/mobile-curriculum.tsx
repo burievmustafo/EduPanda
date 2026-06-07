@@ -1,7 +1,9 @@
 import { getDashboardCourse } from '@/actions/course.action'
+import { getQuizSectionIds } from '@/actions/quiz.action'
 import { Progress } from '@/components/ui/progress'
 import { translation } from '@/i18n/server'
 import { auth } from '@clerk/nextjs'
+import CourseResources from '../../_components/resources'
 import Sections from '../../_components/sections'
 
 interface Props {
@@ -15,6 +17,8 @@ async function MobileCurriculum({ courseId, lng }: Props) {
 		userId!,
 		courseId
 	)
+	const quizSectionIds = await getQuizSectionIds(courseId)
+	const courseData = JSON.parse(JSON.stringify(course))
 
 	return (
 		<div className='z-10 mt-4 rounded-md bg-background p-2'>
@@ -27,7 +31,11 @@ async function MobileCurriculum({ courseId, lng }: Props) {
 			</div>
 
 			<div className='mt-4'>
-				<Sections sections={JSON.parse(JSON.stringify(sections))} />
+				<Sections
+					sections={JSON.parse(JSON.stringify(sections))}
+					quizSectionIds={quizSectionIds}
+				/>
+				<CourseResources resources={courseData.resources ?? []} />
 			</div>
 		</div>
 	)

@@ -28,26 +28,26 @@ export async function generateStaticParams() {
 }
 
 export const metadata: Metadata = {
-	metadataBase: new URL('https://startup.sammi.ac'),
-	title: 'Sammi praktikum | Dasturlash kurslari',
+	metadataBase: new URL('https://e-learning.uz'),
+	title: 'e-Learning | Dasturlash kurslari',
 	description:
-		"Sammi Praktikum Next.js dasturlash kurslari, amaliyotlar, startup loyihalar va asosiysi sifatli ta'limdir.",
-	authors: [{ name: 'Samar Badriddinov', url: 'https://startup.sammi.ac' }],
+		"e-Learning Next.js dasturlash kurslari, amaliyotlar, startup loyihalar va asosiysi sifatli ta'limdir.",
+	authors: [{ name: 'e-Learning', url: 'https://e-learning.uz' }],
 	icons: { icon: '/logo.svg' },
 	openGraph: {
-		title: 'Sammi praktikum | Dasturlash kurslari',
+		title: 'e-Learning | Dasturlash kurslari',
 		description:
-			"Sammi Praktikum Next.js dasturlash kurslari, amaliyotlar, startup loyihalar va asosiysi sifatli ta'limdir.",
+			"e-Learning Next.js dasturlash kurslari, amaliyotlar, startup loyihalar va asosiysi sifatli ta'limdir.",
 		type: 'website',
-		url: 'https://startup.sammi.ac',
+		url: 'https://e-learning.uz',
 		locale: 'uz_UZ',
 		images: 'https://media.graphassets.com/f4jkBWQ6SVaKwySKRNQT',
 		countryName: 'Uzbekistan',
-		siteName: 'Sammi',
-		emails: 'info@sammi.ac',
+		siteName: 'e-Learning',
+		emails: 'info@e-learning.uz',
 	},
 	keywords:
-		"Praktikum, Praktikum sammi, NextJS, NextJS to'liq kurs, NextJS kurs, NextJS dasturlash, Startup, Startup loyiha, Startup sammi, Sammi, Sammi praktikum, Sammi dasturlash, Sammi startup, Sammi kurs, Sammi kurslari, Sammi dasturlash kurslari, Sammi startup kurslari, Sammi startup loyihalari, Sammi startup loyiha, Sammi startup loyihasi, Sammi startup loyihasi dasturlash",
+		"e-Learning, e-Learning kurslari, NextJS, NextJS to'liq kurs, NextJS kurs, NextJS dasturlash, Startup, Startup loyiha, dasturlash kurslari, online ta'lim, amaliy kurslar",
 }
 
 interface Props extends ChildProps {
@@ -58,7 +58,13 @@ function RootLayout({ children, params: { lng } }: Props) {
 	const local = localization(lng)
 
 	return (
-		<ClerkProvider localization={local}>
+		<ClerkProvider
+			localization={local}
+			signInUrl={`/${lng}/sign-in`}
+			signUpUrl={`/${lng}/sign-up`}
+			afterSignInUrl={`/${lng}`}
+			afterSignUpUrl={`/${lng}`}
+		>
 			<html lang={lng} dir={dir(lng)} suppressHydrationWarning>
 				<body
 					className={`${roboto.variable} ${spaceGrotesk.variable} custom-scrollbar overflow-x-hidden`}

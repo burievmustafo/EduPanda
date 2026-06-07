@@ -25,6 +25,14 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+function formatUsd(price?: number | null) {
+	if (typeof price !== 'number' || Number.isNaN(price)) return null
+	return price.toLocaleString('en-US', {
+		style: 'currency',
+		currency: 'USD',
+	})
+}
+
 function Price(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
 
@@ -48,10 +56,7 @@ function Price(course: ICourse) {
 								Old price:
 							</span>
 							<span className='font-medium'>
-								{course.oldPrice.toLocaleString('en-US', {
-									style: 'currency',
-									currency: 'USD',
-								})}
+								{formatUsd(course.oldPrice) ?? '—'}
 							</span>
 						</div>
 						<div className='flex items-center gap-2'>
@@ -59,10 +64,7 @@ function Price(course: ICourse) {
 								Current price:
 							</span>
 							<span className='font-medium'>
-								{course.currentPrice.toLocaleString('en-US', {
-									style: 'currency',
-									currency: 'USD',
-								})}
+								{formatUsd(course.currentPrice) ?? 'Free'}
 							</span>
 						</div>
 					</div>

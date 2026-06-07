@@ -6,9 +6,12 @@
  * (Eski mock `@/mock/db` da qoladi — havola/offline uchun.)
  */
 
-import { apiGet, apiPost } from '@/api/client'
+import { apiDelete, apiGet, apiPost } from '@/api/client'
 import type {
 	CourseDTO,
+	CourseGradeDTO,
+	CourseResourceDTO,
+	CourseReviewDTO,
 	LessonDetailDTO,
 	LessonProgressInput,
 	LessonProgressResultDTO,
@@ -32,6 +35,23 @@ export const getSections = (courseId: string) =>
 export const enrollCourse = (courseId: string) =>
 	apiPost<{ isEnrolled: true }>(`/courses/${courseId}/enroll`)
 
+export const unenrollCourse = (courseId: string) =>
+	apiDelete<{ isEnrolled: false }>(`/courses/${courseId}/unenroll`)
+
+export const getCourseGrades = (courseId: string) =>
+	apiGet<{ grades: CourseGradeDTO[] }>(`/courses/${courseId}/grades`)
+
+export const getCourseResources = (courseId: string) =>
+	apiGet<{ resources: CourseResourceDTO[] }>(`/courses/${courseId}/resources`)
+
+export const getCourseReview = (courseId: string) =>
+	apiGet<{ review: CourseReviewDTO | null }>(`/courses/${courseId}/review`)
+
+export const submitCourseReview = (
+	courseId: string,
+	payload: { rating: number; data: string }
+) => apiPost<{ review: CourseReviewDTO }>(`/courses/${courseId}/review`, payload)
+
 /* --------------------------------- Lessons --------------------------------- */
 
 export const getLesson = (lessonId: string) =>
@@ -41,6 +61,9 @@ export const saveLessonProgress = (
 	lessonId: string,
 	input: LessonProgressInput
 ) => apiPost<LessonProgressResultDTO>(`/lessons/${lessonId}/progress`, input)
+
+export const completeLesson = (lessonId: string) =>
+	apiPost<LessonProgressResultDTO>(`/lessons/${lessonId}/complete`)
 
 /* ----------------------------- Timed questions ----------------------------- */
 

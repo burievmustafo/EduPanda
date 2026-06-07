@@ -43,8 +43,10 @@ function ImageGenerator() {
 
 			const urls = response.data.map((image: { url: string }) => image.url)
 			setPhotos(urls)
-		} catch {
-			toast.error(t('error'))
+		} catch (error) {
+			const msg = (error as { response?: { data?: { message?: string } } })
+				?.response?.data?.message
+			toast.error(msg ?? t('error'))
 		} finally {
 			form.reset()
 		}

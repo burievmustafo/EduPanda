@@ -2,12 +2,14 @@ import { Separator } from '@/components/ui/separator'
 import Header from '../../../../../../components/shared/header'
 import { getSectionById } from '@/actions/section.action'
 import { Button } from '@/components/ui/button'
-import { ChevronLeftCircle, Settings, Settings2 } from 'lucide-react'
+import { ChevronLeftCircle, ListChecks, Settings, Settings2 } from 'lucide-react'
 import Link from 'next/link'
 import Action from './_components/action'
 import SectionField from './_components/section-field'
 import Lessons from './_components/lessons'
 import { getLessons } from '@/actions/lesson.action'
+import { getSectionQuiz } from '@/actions/quiz.action'
+import SectionQuiz from './_components/section-quiz'
 
 interface Params {
 	params: { sectionId: string; courseId: string }
@@ -15,6 +17,7 @@ interface Params {
 async function Page({ params }: Params) {
 	const sectionJSON = await getSectionById(params.sectionId)
 	const lessonsJSON = await getLessons(params.sectionId)
+	const quizData = await getSectionQuiz(params.sectionId)
 
 	const section = JSON.parse(JSON.stringify(sectionJSON))
 	const lessons = JSON.parse(JSON.stringify(lessonsJSON))
@@ -56,6 +59,20 @@ async function Page({ params }: Params) {
 					</div>
 					<SectionField {...section} />
 				</div>
+			</div>
+
+			<div className='mt-6 flex flex-col space-y-2'>
+				<div className='flex items-center gap-2'>
+					<span className='font-space-grotesk text-3xl font-medium'>
+						Section Quiz
+					</span>{' '}
+					<ListChecks />
+				</div>
+				<SectionQuiz
+					sectionId={params.sectionId}
+					quiz={quizData.quiz}
+					questions={quizData.questions}
+				/>
 			</div>
 		</>
 	)

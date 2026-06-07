@@ -7,12 +7,19 @@ import ShareBtns from './_components/share-btns'
 import parse from 'html-react-parser'
 import { Separator } from '@/components/ui/separator'
 import { Metadata, ResolvingMetadata } from 'next'
+import { notFound } from 'next/navigation'
 
 export async function generateMetadata(
 	{ params }: { params: { slug: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
 	const blog = await getDetailedBlog(params.slug!)
+
+	if (!blog) {
+		return {
+			title: 'Blog not found',
+		}
+	}
 
 	return {
 		title: blog.title,
@@ -26,6 +33,8 @@ export async function generateMetadata(
 }
 async function Page({ params }: { params: { slug: string } }) {
 	const blog = await getDetailedBlog(params.slug)
+
+	if (!blog) notFound()
 
 	return (
 		<div className='container mx-auto max-w-5xl pt-[15vh]'>

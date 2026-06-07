@@ -11,30 +11,45 @@ type Props = {
   onTimeUpdate?: (currentTime: number) => void;
   onPause?: () => void;
   enableTimeTracking?: boolean;
+  seekToSec?: number;
+  playbackRate?: number;
 };
 
-export function LessonVideo({ url, paused, onTimeUpdate, onPause, enableTimeTracking }: Props) {
+export function LessonVideo({
+  url,
+  paused,
+  onTimeUpdate,
+  onPause,
+  enableTimeTracking,
+  seekToSec,
+  playbackRate,
+}: Props) {
   const youtubeId = getYouTubeId(url);
 
   if (youtubeId) {
     return (
       <YouTubeVideo
+        key={youtubeId}
         videoId={youtubeId}
         paused={paused}
         onTimeUpdate={onTimeUpdate}
         onPause={onPause}
         enableTimeTracking={enableTimeTracking}
+        seekToSec={seekToSec}
       />
     );
   }
 
   return (
     <NativeVideo
+      key={url}
       url={url}
       paused={paused}
       onTimeUpdate={onTimeUpdate}
       onPause={onPause}
       enableTimeTracking={enableTimeTracking}
+      seekToSec={seekToSec}
+      playbackRate={playbackRate}
     />
   );
 }
@@ -45,12 +60,14 @@ function YouTubeVideo({
   onTimeUpdate,
   onPause,
   enableTimeTracking,
+  seekToSec,
 }: {
   videoId: string;
   paused?: boolean;
   onTimeUpdate?: (currentTime: number) => void;
   onPause?: () => void;
   enableTimeTracking?: boolean;
+  seekToSec?: number;
 }) {
   const ref = useRef<WebView>(null);
   const html = useMemo(() => makeYouTubeHtml(videoId, Boolean(enableTimeTracking)), [videoId, enableTimeTracking]);
@@ -61,8 +78,16 @@ function YouTubeVideo({
     );
   }, [paused]);
 
+  useEffect(() => {
+    if (seekToSec == null || seekToSec < 0) return;
+    ref.current?.injectJavaScript(
+      `if (window.player && window.player.seekTo) { window.player.seekTo(${seekToSec}, true); } true;`
+    );
+  }, [seekToSec]);
+
   return (
     <WebView
+      key={videoId}
       ref={ref}
       source={{ html, baseUrl: 'https://www.youtube.com' }}
       style={styles.video}
@@ -82,7 +107,15 @@ function YouTubeVideo({
   );
 }
 
-function NativeVideo({ url, paused, onTimeUpdate, onPause, enableTimeTracking }: Props) {
+function NativeVideo({
+  url,
+  paused,
+  onTimeUpdate,
+  onPause,
+  enableTimeTracking,
+  seekToSec,
+  playbackRate = 1,
+}: Props) {
   const player = useVideoPlayer(url, (p) => {
     p.timeUpdateEventInterval = 0.5;
   });
@@ -91,6 +124,15 @@ function NativeVideo({ url, paused, onTimeUpdate, onPause, enableTimeTracking }:
     if (paused) player.pause();
     else if (paused === false) player.play();
   }, [paused, player]);
+
+  useEffect(() => {
+    if (seekToSec == null || seekToSec < 0) return;
+    player.currentTime = seekToSec;
+  }, [seekToSec, player]);
+
+  useEffect(() => {
+    player.playbackRate = playbackRate;
+  }, [playbackRate, player]);
 
   useEffect(() => {
     if (!enableTimeTracking) return;
@@ -104,7 +146,15 @@ function NativeVideo({ url, paused, onTimeUpdate, onPause, enableTimeTracking }:
     };
   }, [enableTimeTracking, onPause, onTimeUpdate, player]);
 
-  return <VideoView player={player} style={styles.video} contentFit="contain" nativeControls />;
+  return (
+    <VideoView
+      key={url}
+      player={player}
+      style={styles.video}
+      contentFit="contain"
+      nativeControls
+    />
+  );
 }
 
 export function VideoFrame({ children }: { children: React.ReactNode }) {
@@ -132,7 +182,13 @@ function makeYouTubeHtml(videoId: string, trackTime: boolean) {
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           videoId: '${videoId}',
-          playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+          playerVars: {
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+            origin: 'https://www.youtube.com'
+          },
           events: {
             onStateChange: function(event) {
               if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) send({ type: 'pause' });

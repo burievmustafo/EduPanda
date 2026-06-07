@@ -13,6 +13,9 @@ export const payment = async (
 	try {
 		await connectToDatabase()
 		const customer = await getCustomer(clerkId)
+
+		if (!customer) throw new Error('Customer not found')
+
 		await atachPayment(paymentMethod, customer.id)
 
 		const paymentIntent = await stripe.paymentIntents.create({

@@ -4,6 +4,7 @@ import { Draggable } from '@hello-pangea/dnd'
 import { Grip, Pencil, Trash2 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
+import TimedQuestionDialog from './timed-question-dialog'
 
 interface Props {
 	lesson: ILesson
@@ -42,6 +43,10 @@ function LessonList({ index, lesson, onStartEdit }: Props) {
 					</div>
 					<span>{lesson.title}</span>
 					<div className='ml-auto flex items-center gap-x-2 pr-2'>
+						<TimedQuestionDialog
+							lessonId={lesson._id}
+							lessonTitle={lesson.title}
+						/>
 						<Pencil
 							className='size-4 cursor-pointer transition hover:opacity-75'
 							onClick={onStartEdit}

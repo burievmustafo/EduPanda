@@ -95,6 +95,8 @@ export const getPaymentIntents = async (clerkId: string) => {
 	try {
 		const customer = await getCustomer(clerkId)
 
+		if (!customer) return []
+
 		const payments = await stripe.paymentIntents.list({
 			customer: customer.id,
 			limit: 100,

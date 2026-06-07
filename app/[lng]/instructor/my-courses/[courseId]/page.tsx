@@ -6,6 +6,7 @@ import { Images, LayoutPanelLeft, Settings } from 'lucide-react'
 import CourseFields from './_components/course-fields'
 import Description from './_components/description'
 import Information from './_components/information'
+import Resources from './_components/resources'
 import SelectFields from './_components/select-fields'
 import Sections from './_components/sections'
 import Price from './_components/price'
@@ -41,6 +42,7 @@ async function Page({ params }: { params: { courseId: string } }) {
 					<CourseFields {...course} />
 					<Description {...course} />
 					<Information {...course} />
+					<Resources {...course} />
 					<SelectFields {...course} />
 					<Price {...course} />
 				</div>

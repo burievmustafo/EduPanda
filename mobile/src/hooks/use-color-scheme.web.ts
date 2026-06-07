@@ -1,21 +1,27 @@
-import { useEffect, useState } from 'react';
-import { useColorScheme as useRNColorScheme } from 'react-native';
+import { useEffect, useState } from 'react'
+import { useColorScheme as useSystemColorScheme } from 'react-native'
+
+import { useThemeStore, type ThemePreference } from '@/store/theme-store'
 
 /**
- * To support static rendering, this value needs to be re-calculated on the client side for web
+ * Web: static render uchun hydration; theme store bilan bir xil mantiq.
  */
-export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
+export function useColorScheme(): 'light' | 'dark' {
+	const [ready, setReady] = useState(false)
+	const preference = useThemeStore((s) => s.preference)
+	const system = useSystemColorScheme()
 
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
+	useEffect(() => {
+		setReady(true)
+	}, [])
 
-  const colorScheme = useRNColorScheme();
+	if (!ready) return 'light'
 
-  if (hasHydrated) {
-    return colorScheme;
-  }
+	if (preference === 'dark') return 'dark'
+	if (preference === 'light') return 'light'
+	return system === 'dark' ? 'dark' : 'light'
+}
 
-  return 'light';
+export function useThemePreference(): ThemePreference {
+	return useThemeStore((s) => s.preference)
 }

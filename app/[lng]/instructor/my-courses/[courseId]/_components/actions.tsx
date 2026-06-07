@@ -4,6 +4,8 @@ import { deleteCourse, updateCourse } from '@/actions/course.action'
 import { ICourse } from '@/app.types'
 import ConfirmDeleteModal from '@/components/modals/confirm-delete.modal'
 import { Button } from '@/components/ui/button'
+import { Users } from 'lucide-react'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -41,6 +43,12 @@ function Actions(course: ICourse) {
 
 	return (
 		<div className='flex gap-2 self-end'>
+			<Link href={`/en/instructor/my-courses/${course._id}/students`}>
+				<Button variant={'outline'}>
+					<Users className='size-4' />
+					<span className='ml-2 max-sm:hidden'>Students</span>
+				</Button>
+			</Link>
 			<Button onClick={onUpdateStatus}>
 				{course.published ? 'Draft' : 'Publish'}
 			</Button>

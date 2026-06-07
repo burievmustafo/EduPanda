@@ -4,11 +4,11 @@ import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
 import SectionQuiz from '@/database/section-quiz.model'
 
-// Teacher kontent yaratish uchun ownership tekshiruvlari (DATABASE_AND_API_PLAN.md §6.2).
+// Instructor kontent yaratish uchun ownership tekshiruvlari (DATABASE_AND_API_PLAN.md §6.2).
 
 export function requireTeacher(role: Role) {
-	if (role !== 'teacher' && role !== 'admin') {
-		throw new ApiError(403, 'forbidden', 'Teacher role required')
+	if (role !== 'instructor' && role !== 'admin') {
+		throw new ApiError(403, 'forbidden', 'Instructor role required')
 	}
 }
 

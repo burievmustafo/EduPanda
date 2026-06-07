@@ -1,8 +1,27 @@
 import Navbar from '@/components/shared/navbar'
 import Sidebar from '@/components/shared/sidebar'
 import { ChildProps } from '@/types'
+import { getRole } from '@/actions/user.action'
+import { auth } from '@clerk/nextjs'
+import { redirect } from 'next/navigation'
 
-function Layout({ children }: ChildProps) {
+async function Layout({
+	children,
+	params,
+}: ChildProps & { params: { lng: string } }) {
+	const { userId } = auth()
+	if (!userId) redirect(`/${params.lng}/sign-in`)
+
+	const user = await getRole(userId)
+	const adminEmails = process.env.ADMIN_EMAILS?.split(',')
+		.map(email => email.trim().toLowerCase())
+		.filter(Boolean)
+	const isAllowedAdminEmail =
+		!adminEmails?.length ||
+		(user?.email ? adminEmails.includes(user.email.toLowerCase()) : false)
+
+	if (!user?.isAdmin || !isAllowedAdminEmail) redirect(`/${params.lng}`)
+
 	return (
 		<>
 			<Navbar />

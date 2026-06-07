@@ -1,4 +1,4 @@
-import openai from '@/lib/openai'
+import { aiChat, aiErrorResponse } from '@/lib/openrouter'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -10,13 +10,9 @@ export async function POST(req: Request) {
 			return new NextResponse('Messages are required', { status: 400 })
 		}
 
-		const response = await openai.chat.completions.create({
-			model: 'gpt-3.5-turbo',
-			messages,
-		})
-
-		return NextResponse.json(response.choices[0].message.content)
+		const text = await aiChat(messages)
+		return NextResponse.json(text)
 	} catch (error) {
-		return new NextResponse('Internal Error', { status: 500 })
+		return aiErrorResponse(error)
 	}
 }

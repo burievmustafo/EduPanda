@@ -1,112 +1,169 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router'
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Alert, StyleSheet } from 'react-native'
 
-import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Brand, Radius, Spacing } from '@/constants/theme';
-import { useLocale } from '@/hooks/use-locale';
-import { useTheme } from '@/hooks/use-theme';
-import { useLanguage } from '@/store/language-store';
+import { SettingsGroup, ThemeOptionRow } from '@/components/settings'
+import { Screen } from '@/components/screen'
+import { AppText } from '@/components/ui/app-text'
+import { SettingsRow } from '@/components/ui/settings-row'
+import { spacing } from '@/design/tokens'
+import { useColorScheme } from '@/hooks/use-color-scheme'
+import { useLocale } from '@/hooks/use-locale'
+import { useLanguage } from '@/store/language-store'
+import { useRemindersStore } from '@/store/reminders-store'
+import { logOutToSplash } from '@/lib/auth-logout'
+import { useThemeStore, type ThemePreference } from '@/store/theme-store'
+
+const THEME_OPTIONS: Array<{
+	key: ThemePreference
+	icon: 'sunny-outline' | 'moon-outline' | 'phone-portrait-outline'
+	labelKey: 'themeLight' | 'themeDark' | 'themeSystem'
+	descKey?: 'themeSystemDesc'
+}> = [
+	{ key: 'light', icon: 'sunny-outline', labelKey: 'themeLight' },
+	{ key: 'dark', icon: 'moon-outline', labelKey: 'themeDark' },
+	{
+		key: 'system',
+		icon: 'phone-portrait-outline',
+		labelKey: 'themeSystem',
+		descKey: 'themeSystemDesc',
+	},
+]
 
 export default function SettingsScreen() {
-  const { t } = useTranslation();
-  const theme = useTheme();
-  const locale = useLocale();
-  const setLocale = useLanguage((s) => s.setLocale);
+	const { t } = useTranslation()
+	const locale = useLocale()
+	const scheme = useColorScheme()
+	const setLocale = useLanguage((s) => s.setLocale)
+	const preference = useThemeStore((s) => s.preference)
+	const setPreference = useThemeStore((s) => s.setPreference)
+	const hydrateTheme = useThemeStore((s) => s.hydrate)
+	const hydrateReminders = useRemindersStore((s) => s.hydrate)
+	const enabledCount = useRemindersStore((s) => s.enabledCount())
+	const remindersHydrated = useRemindersStore((s) => s.hydrated)
 
-  return (
-    <Screen edgesTop>
-      <ThemedText style={styles.title}>Settings</ThemedText>
+	useEffect(() => {
+		void hydrateTheme()
+		void hydrateReminders()
+	}, [hydrateTheme, hydrateReminders])
 
-      <SectionHeader label="Language" />
-      <ThemedView style={[styles.group, { backgroundColor: theme.backgroundCard }]}>
-        <SettingRow
-          icon="language-outline"
-          label="English"
-          selected={locale === 'en'}
-          onPress={() => setLocale('en')}
-        />
-        <Divider />
-        <SettingRow
-          icon="language-outline"
-          label="日本語"
-          selected={locale === 'ja'}
-          onPress={() => setLocale('ja')}
-        />
-      </ThemedView>
+	const remindersSubtitle =
+		remindersHydrated && enabledCount > 0
+			? t('settings.reminders.activeCount', { count: enabledCount })
+			: t('settings.reminders.off')
 
-      <SectionHeader label="Account" />
-      <ThemedView style={[styles.group, { backgroundColor: theme.backgroundCard }]}>
-        <SettingRow
-          icon="person-outline"
-          label="Switch role"
-          onPress={() => router.replace('/')}
-          chevron
-        />
-      </ThemedView>
+	const currentThemeLabel = t(
+		`settings.${THEME_OPTIONS.find((o) => o.key === preference)?.labelKey ?? 'themeSystem'}`,
+	)
+	const activeSchemeLabel =
+		scheme === 'dark' ? t('settings.themeDark') : t('settings.themeLight')
 
-      <SectionHeader label="About" />
-      <ThemedView style={[styles.group, { backgroundColor: theme.backgroundCard }]}>
-        <SettingRow icon="information-circle-outline" label="EduPanda v1.0" />
-        <Divider />
-        <SettingRow icon="code-outline" label="Powered by Next.js + Expo + MongoDB" />
-      </ThemedView>
-    </Screen>
-  );
+	return (
+		<Screen edgesTop>
+			<AppText variant="pageTitle" style={styles.title}>
+				{t('settings.title')}
+			</AppText>
+			<AppText variant="caption" color="secondary" style={styles.subtitle}>
+				{t('settings.subtitle')}
+			</AppText>
+
+			<SectionLabel label={t('settings.appearance')} />
+			<AppText variant="caption" color="tertiary" style={styles.hint}>
+				{t('settings.appearanceHint', { mode: currentThemeLabel, scheme: activeSchemeLabel })}
+			</AppText>
+			<SettingsGroup>
+				{THEME_OPTIONS.map((option, index) => (
+					<ThemeOptionRow
+						key={option.key}
+						icon={option.icon}
+						label={t(`settings.${option.labelKey}`)}
+						description={
+							option.descKey ? t(`settings.${option.descKey}`) : undefined
+						}
+						selected={preference === option.key}
+						onPress={() => void setPreference(option.key)}
+						isLast={index === THEME_OPTIONS.length - 1}
+					/>
+				))}
+			</SettingsGroup>
+
+			<SectionLabel label={t('settings.language')} />
+			<SettingsGroup>
+				<SettingsRow
+					icon="language-outline"
+					label="English"
+					subtitle={locale === 'en' ? t('settings.active') : undefined}
+					showChevron={false}
+					onPress={() => setLocale('en')}
+				/>
+				<SettingsRow
+					icon="language-outline"
+					label="日本語"
+					subtitle={locale === 'ja' ? t('settings.active') : undefined}
+					showChevron={false}
+					onPress={() => setLocale('ja')}
+				/>
+			</SettingsGroup>
+
+			<SectionLabel label={t('settings.notifications')} />
+			<SettingsGroup>
+				<SettingsRow
+					icon="notifications-outline"
+					label={t('settings.reminders.title')}
+					subtitle={remindersSubtitle}
+					onPress={() => router.push('/study-reminders')}
+				/>
+				<SettingsRow
+					icon="mail-outline"
+					label={t('settings.courseNotifications')}
+					subtitle={t('settings.comingSoon')}
+					showChevron={false}
+				/>
+			</SettingsGroup>
+
+			<SectionLabel label={t('settings.account')} />
+			<SettingsGroup>
+				<SettingsRow
+					icon="log-out-outline"
+					label={t('settings.logOut')}
+					subtitle={t('settings.logOutDesc')}
+					onPress={() => {
+						Alert.alert(t('settings.logOut'), t('settings.logOutConfirm'), [
+							{ text: t('common.back'), style: 'cancel' },
+							{
+								text: t('settings.logOut'),
+								style: 'destructive',
+								onPress: () => void logOutToSplash(router),
+							},
+						])
+					}}
+				/>
+			</SettingsGroup>
+
+			<SectionLabel label={t('settings.about')} />
+			<SettingsGroup>
+				<SettingsRow icon="information-circle-outline" label={t('settings.version')} />
+			</SettingsGroup>
+		</Screen>
+	)
 }
 
-function SectionHeader({ label }: { label: string }) {
-  return (
-    <ThemedText style={styles.sectionLabel}>{label.toUpperCase()}</ThemedText>
-  );
-}
-
-function Divider() {
-  const theme = useTheme();
-  return <View style={[styles.divider, { backgroundColor: theme.border }]} />;
-}
-
-function SettingRow({
-  icon,
-  label,
-  selected,
-  onPress,
-  chevron,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  selected?: boolean;
-  onPress?: () => void;
-  chevron?: boolean;
-}) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.row, { opacity: pressed ? 0.7 : 1 }]}>
-      <Ionicons name={icon} size={20} color={theme.textSecondary} />
-      <ThemedText style={styles.rowLabel}>{label}</ThemedText>
-      <View style={styles.rowRight}>
-        {selected && (
-          <Ionicons name="checkmark" size={18} color={Brand.primary} />
-        )}
-        {chevron && (
-          <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-        )}
-      </View>
-    </Pressable>
-  );
+function SectionLabel({ label }: { label: string }) {
+	return (
+		<AppText variant="captionStrong" color="secondary" style={styles.section}>
+			{label.toUpperCase()}
+		</AppText>
+	)
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 28, fontWeight: '800', marginBottom: Spacing.three },
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1, opacity: 0.5, marginTop: Spacing.three, marginBottom: Spacing.one },
-  group: { borderRadius: Radius.lg, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', padding: Spacing.three, gap: Spacing.two },
-  rowLabel: { flex: 1, fontSize: 16 },
-  rowRight: { alignItems: 'center' },
-  divider: { height: StyleSheet.hairlineWidth, marginLeft: Spacing.four + 20 },
-});
+	title: { marginBottom: spacing.xs },
+	subtitle: { marginBottom: spacing.lg },
+	hint: { marginBottom: spacing.md, marginTop: -spacing.xs },
+	section: {
+		marginTop: spacing['2xl'],
+		marginBottom: spacing.sm,
+		letterSpacing: 0.8,
+	},
+})

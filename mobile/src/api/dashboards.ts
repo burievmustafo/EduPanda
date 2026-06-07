@@ -26,7 +26,7 @@ export type StudentDashboard = {
 export const getStudentDashboard = () =>
 	apiGet<StudentDashboard>('/student/dashboard')
 
-/* ------------------------------- Teacher ----------------------------------- */
+/* ------------------------------ Instructor --------------------------------- */
 
 export type TeacherCourse = {
 	courseId: string
@@ -39,24 +39,3 @@ export type TeacherCourse = {
 export type TeacherDashboard = { courses: TeacherCourse[] }
 export const getTeacherDashboard = () =>
 	apiGet<TeacherDashboard>('/teacher/dashboard')
-
-/* -------------------------------- Parent ----------------------------------- */
-
-export type ChildSummary = {
-	studentId: string
-	fullName: string
-	picture?: string
-	avgScore: number
-	attempts: number
-	completedLessons: number
-}
-export type ParentDashboard = { children: ChildSummary[] }
-export const getParentDashboard = () =>
-	apiGet<ParentDashboard>('/parent/dashboard')
-
-export type ChildProgress = {
-	byCourse: CourseProgressItem[]
-	recentAttempts: AttemptItem[]
-}
-export const getChildProgress = (studentId: string) =>
-	apiGet<ChildProgress>(`/parent/children/${studentId}/progress`)

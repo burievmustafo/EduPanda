@@ -1,27 +1,22 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { enUS, ruRU, trTR } from '@clerk/localizations'
-import { uzUZ } from './uz-UZ'
+import { enUS, jaJP } from '@clerk/localizations'
 import qs from 'query-string'
 import { ILesson } from '@/app.types'
-import { enUS as en, uz, tr, ru } from 'date-fns/locale'
+import { enUS as en, ja } from 'date-fns/locale'
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
 export function localization(lng: string) {
-	if (lng === 'en') return enUS
-	if (lng === 'ru') return ruRU
-	if (lng === 'tr') return trTR
-	if (lng === 'uz') return uzUZ
+	if (lng === 'ja') return jaJP
+	return enUS
 }
 
 export function getCurrentLng(lng: string) {
-	if (lng === 'en') return 'English'
-	if (lng === 'ru') return 'Русский'
-	if (lng === 'tr') return 'Türkçe'
-	if (lng === 'uz') return 'O‘zbek'
+	if (lng === 'ja') return '日本語'
+	return 'English'
 }
 
 export function getReadingTime(content: string) {
@@ -158,10 +153,8 @@ export const formatAndDivideNumber = (num: number) => {
 }
 
 export const getTimeLocale = (lng: string) => {
-	if (lng === 'en') return en
-	if (lng === 'ru') return ru
-	if (lng === 'tr') return tr
-	if (lng === 'uz') return uz
+	if (lng === 'ja') return ja
+	return en
 }
 
 export const generateNumericId = (): string => {

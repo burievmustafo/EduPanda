@@ -22,9 +22,9 @@ export const createLesson = async (params: ICreateLesson) => {
 		await connectToDatabase()
 		const { lesson, section, path } = params
 		const duration = {
-			hours: Number(lesson.hours),
-			minutes: Number(lesson.minutes),
-			seconds: Number(lesson.seconds),
+			hours: Number(lesson.hours) || 0,
+			minutes: Number(lesson.minutes) || 0,
+			seconds: Number(lesson.seconds) || 0,
 		}
 
 		const existSection = await Section.findById(section)
@@ -32,6 +32,8 @@ export const createLesson = async (params: ICreateLesson) => {
 
 		const newLesson = await Lesson.create({
 			...lesson,
+			titleI18n: { en: lesson.title },
+			contentI18n: { en: lesson.content },
 			position,
 			duration,
 			section,
@@ -66,12 +68,17 @@ export const editLesson = async (
 	try {
 		await connectToDatabase()
 		const duration = {
-			hours: Number(lesson.hours),
-			minutes: Number(lesson.minutes),
-			seconds: Number(lesson.seconds),
+			hours: Number(lesson.hours) || 0,
+			minutes: Number(lesson.minutes) || 0,
+			seconds: Number(lesson.seconds) || 0,
 		}
 
-		await Lesson.findByIdAndUpdate(lessonId, { ...lesson, duration })
+		await Lesson.findByIdAndUpdate(lessonId, {
+			...lesson,
+			titleI18n: { en: lesson.title },
+			contentI18n: { en: lesson.content },
+			duration,
+		})
 		revalidatePath(path)
 	} catch (error) {
 		throw new Error('Something went wrong!')
@@ -136,6 +143,16 @@ export const getLesson = async (id: string) => {
 	try {
 		await connectToDatabase()
 		return await Lesson.findById(id).select('title content videoUrl')
+	} catch (error) {
+		throw new Error('Something went wrong!')
+	}
+}
+
+export const getLessonSectionId = async (lessonId: string) => {
+	try {
+		await connectToDatabase()
+		const section = await Section.findOne({ lessons: lessonId }).select('_id')
+		return section ? String(section._id) : null
 	} catch (error) {
 		throw new Error('Something went wrong!')
 	}

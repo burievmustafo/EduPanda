@@ -2,11 +2,13 @@ import { authMiddleware } from '@clerk/nextjs'
 import createMiddleware from 'next-intl/middleware'
 
 const intlMiddleware = createMiddleware({
-	locales: ['en', 'ru', 'uz', 'tr', 'ja'],
+	locales: ['en', 'ja'],
 	defaultLocale: 'en',
 })
 
 export default authMiddleware({
+	// Dev: kompyuter soati Clerk serveridan biroz orqada bo'lsa JWT "kelajakda" deb rad etiladi.
+	clockSkewInMs: 60_000,
 	beforeAuth: req => intlMiddleware(req),
 	publicRoutes: [
 		'/:lng',
@@ -22,15 +24,20 @@ export default authMiddleware({
 		'/:lng/sign-up',
 		'/:lng/ai',
 		// Mobil API: Clerk bloklamasin (auth qo'lda — Bearer token route ichida tekshiriladi)
-		'/:lng/api/mobile/(.*)',
+		'/(.*)/api/mobile(.*)',
+		'/api/mobile(.*)',
 		// EduPanda web: kurslar va o'quv sahifalar
 		'/:lng/edupanda',
 		'/:lng/edupanda/courses',
 		'/:lng/edupanda/course/:id',
 	],
-	ignoredRoutes: ['/en/api/webhook'],
+	ignoredRoutes: ['/en/api/webhook', '/(.*)/api/mobile(.*)', '/api/mobile(.*)'],
 })
 
 export const config = {
-	matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+	matcher: [
+		'/((?![^/]+/api/mobile|.+\\.[\\w]+$|_next).*)',
+		'/',
+		'/(api|trpc)(.*)',
+	],
 }

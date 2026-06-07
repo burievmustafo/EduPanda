@@ -183,9 +183,9 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 		defaultValues: {
 			title,
 			videoUrl,
-			hours: `${hours}`,
-			minutes: `${minutes}`,
-			seconds: `${seconds}`,
+			hours: hours != null ? `${hours}` : '',
+			minutes: minutes != null ? `${minutes}` : '',
+			seconds: seconds != null ? `${seconds}` : '',
 			content,
 			free,
 		},

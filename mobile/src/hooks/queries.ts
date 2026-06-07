@@ -1,50 +1,149 @@
+import { useAuth } from '@clerk/clerk-expo';
 import { useQuery } from '@tanstack/react-query';
 
 import {
-  getChildProgress,
-  getParentDashboard,
   getStudentDashboard,
   getTeacherDashboard,
 } from '@/api/dashboards';
 import {
   getCourse,
+  getCourseGrades,
+  getCourseResources,
   getCourses,
   getLesson,
   getSectionQuiz,
   getSections,
 } from '@/api/learning';
 import { getMe } from '@/api/me';
+import {
+  getNotificationCount,
+  getNotifications,
+} from '@/api/notifications';
+import { getPaymentCards } from '@/api/payment';
 
 /* --------------------------------- Reads ----------------------------------- */
 
-export const useCourses = () =>
-  useQuery({ queryKey: ['courses'], queryFn: getCourses });
+/** Clerk sessiyasi yuklanguncha API so'rovlarini kechiktiradi. */
+function useClerkApiReady() {
+  const { isLoaded } = useAuth();
+  return isLoaded;
+}
 
-export const useCourse = (courseId: string) =>
-  useQuery({ queryKey: ['course', courseId], queryFn: () => getCourse(courseId) });
+export const useCourses = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({ queryKey: ['courses'], queryFn: getCourses, enabled });
+};
 
-export const useSections = (courseId: string) =>
-  useQuery({ queryKey: ['sections', courseId], queryFn: () => getSections(courseId) });
+export const useCourse = (courseId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['course', courseId],
+    queryFn: () => getCourse(courseId),
+    enabled: enabled && Boolean(courseId),
+  });
+};
 
-export const useLesson = (lessonId: string) =>
-  useQuery({ queryKey: ['lesson', lessonId], queryFn: () => getLesson(lessonId) });
+export const useSections = (courseId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['sections', courseId],
+    queryFn: () => getSections(courseId),
+    enabled: enabled && Boolean(courseId),
+  });
+};
 
-export const useSectionQuiz = (sectionId: string) =>
-  useQuery({ queryKey: ['quiz', sectionId], queryFn: () => getSectionQuiz(sectionId) });
+export const useCourseGrades = (courseId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['course-grades', courseId],
+    queryFn: () => getCourseGrades(courseId),
+    enabled: enabled && Boolean(courseId),
+  });
+};
 
-export const useMe = () =>
-  useQuery({ queryKey: ['me'], queryFn: getMe, staleTime: 60_000 });
+export const useCourseResources = (courseId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['course-resources', courseId],
+    queryFn: () => getCourseResources(courseId),
+    enabled: enabled && Boolean(courseId),
+  });
+};
+
+export const useLesson = (lessonId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['lesson', lessonId],
+    queryFn: () => getLesson(lessonId),
+    enabled: enabled && Boolean(lessonId),
+  });
+};
+
+export const useSectionQuiz = (sectionId: string) => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['quiz', sectionId],
+    queryFn: () => getSectionQuiz(sectionId),
+    enabled: enabled && Boolean(sectionId),
+  });
+};
+
+export const useMe = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({ queryKey: ['me'], queryFn: getMe, staleTime: 60_000, enabled });
+};
 
 /* ------------------------------- Dashboards -------------------------------- */
 
-export const useStudentDashboard = () =>
-  useQuery({ queryKey: ['studentDashboard'], queryFn: getStudentDashboard });
+export const useStudentDashboard = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['studentDashboard'],
+    queryFn: getStudentDashboard,
+    enabled,
+  });
+};
 
-export const useTeacherDashboard = () =>
-  useQuery({ queryKey: ['teacherDashboard'], queryFn: getTeacherDashboard });
+export const useTeacherDashboard = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['teacherDashboard'],
+    queryFn: getTeacherDashboard,
+    enabled,
+  });
+};
 
-export const useParentDashboard = () =>
-  useQuery({ queryKey: ['parentDashboard'], queryFn: getParentDashboard });
+/* ----------------------------- Notifications ------------------------------- */
 
-export const useChildProgress = (studentId: string) =>
-  useQuery({ queryKey: ['childProgress', studentId], queryFn: () => getChildProgress(studentId) });
+export const useNotifications = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: getNotifications,
+    enabled,
+  });
+};
+
+export const useNotificationCount = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['notificationCount'],
+    queryFn: async () => {
+      const { count } = await getNotificationCount();
+      return count;
+    },
+    enabled,
+    staleTime: 15_000,
+  });
+};
+
+/* -------------------------------- Payment ---------------------------------- */
+
+export const usePaymentCards = () => {
+  const enabled = useClerkApiReady();
+  return useQuery({
+    queryKey: ['paymentCards'],
+    queryFn: getPaymentCards,
+    enabled,
+  });
+};

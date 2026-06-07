@@ -7,6 +7,8 @@ import { revalidatePath } from 'next/cache'
 import Review from '@/database/review.model'
 import Course from '@/database/course.model'
 import { cache } from 'react'
+import { clerkClient } from '@clerk/nextjs'
+import { syncPictureFromClerk } from '@/lib/mobile/profile-picture'
 
 export const createUser = async (data: ICreateUser) => {
 	try {
@@ -24,7 +26,7 @@ export const createUser = async (data: ICreateUser) => {
 			return updatedUser
 		}
 
-		const newUser = User.create(data)
+		const newUser = await User.create(data)
 
 		return newUser
 	} catch (error) {
@@ -36,9 +38,82 @@ export const updateUser = async (data: IUpdateUser) => {
 	try {
 		await connectToDatabase()
 		const { clerkId, updatedData, path } = data
-		const updateduser = await User.findOneAndUpdate({ clerkId }, updatedData)
-		if (path) return revalidatePath(path)
-		return updateduser
+
+		let user = await User.findOne({ clerkId })
+
+		if (!user) {
+			const clerkUser = await clerkClient.users.getUser(clerkId)
+			const email =
+				clerkUser.emailAddresses?.find(
+					emailAddress => emailAddress.id === clerkUser.primaryEmailAddressId
+				)?.emailAddress ||
+				clerkUser.emailAddresses?.[0]?.emailAddress ||
+				''
+			const fullName =
+				[clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') ||
+				email.split('@')[0] ||
+				'User'
+
+			user = email ? await User.findOne({ email }) : null
+
+			if (user) {
+				user.clerkId = clerkId
+				Object.assign(user, updatedData)
+				await user.save()
+			} else {
+				user = await User.create({
+					clerkId,
+					email,
+					fullName,
+					picture: clerkUser.imageUrl,
+					role: 'student',
+					isAdmin: false,
+					approvedInstructor: false,
+					...updatedData,
+				})
+			}
+		} else {
+			user = await User.findOneAndUpdate({ clerkId }, updatedData, {
+				new: true,
+			})
+
+			if (!user) {
+				const clerkUser = await clerkClient.users.getUser(clerkId)
+				const email =
+					clerkUser.emailAddresses?.find(
+						emailAddress =>
+							emailAddress.id === clerkUser.primaryEmailAddressId
+					)?.emailAddress ||
+					clerkUser.emailAddresses?.[0]?.emailAddress ||
+					''
+				const fullName =
+					[clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') ||
+					email.split('@')[0] ||
+					'User'
+
+				user = await User.create({
+					clerkId,
+					email,
+					fullName,
+					picture: clerkUser.imageUrl,
+					role: 'student',
+					isAdmin: false,
+					approvedInstructor: false,
+					...updatedData,
+				})
+			}
+		}
+
+		if (updatedData.approvedInstructor === true) {
+			revalidatePath('/en/admin/instructors')
+			revalidatePath('/uz/admin/instructors')
+			revalidatePath('/ru/admin/instructors')
+			revalidatePath('/tr/admin/instructors')
+			revalidatePath('/ja/admin/instructors')
+		}
+
+		if (path) revalidatePath(path)
+		return user
 	} catch (error) {
 		throw new Error('Error updating user. Please try again.')
 	}
@@ -67,12 +142,18 @@ export const getUser = async (clerkId: string, clerkUserData?: { fullName?: stri
 				fullName: clerkUserData.fullName || 'User',
 				email: clerkUserData.email || '',
 				picture: clerkUserData.picture || '',
-				role: 'user',
+				role: 'student',
 				isAdmin: false,
 				approvedInstructor: false,
 			})
+		} else if (user && clerkUserData?.picture) {
+			const picture = clerkUserData.picture.trim()
+			if (picture && picture !== user.picture) {
+				user.picture = picture
+				await User.updateOne({ clerkId }, { picture })
+			}
 		}
-		
+
 		if (!user) return 'notFound'
 		return JSON.parse(JSON.stringify(user))
 	} catch (error) {
@@ -108,6 +189,23 @@ export const getAdminInstructors = async (params: GetPaginationParams) => {
 			.limit(pageSize)
 			.sort({ createdAt: -1 })
 
+		for (const instructor of instructors) {
+			if (!instructor.clerkId) continue
+			const picture = await syncPictureFromClerk(
+				instructor.clerkId,
+				instructor.picture
+			)
+			if (picture && picture !== instructor.picture) {
+				instructor.picture = picture
+				await User.updateOne(
+					{ clerkId: instructor.clerkId },
+					{ picture }
+				)
+			} else if (picture) {
+				instructor.picture = picture
+			}
+		}
+
 		const totalInstructors = await User.countDocuments({ role: 'instructor' })
 		const isNext = totalInstructors > skipAmount + instructors.length
 
@@ -131,7 +229,7 @@ export const getInstructors = async () => {
 export const getRole = async (clerkId: string) => {
 	try {
 		await connectToDatabase()
-		const user = await User.findOne({ clerkId }).select('role isAdmin')
+		const user = await User.findOne({ clerkId }).select('role isAdmin email')
 		return user
 	} catch (error) {
 		throw new Error('Error getting role')

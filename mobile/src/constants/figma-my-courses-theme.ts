@@ -1,0 +1,22 @@
+/** Figma My Courses / Notifications (W10–W14, saved, in progress, completed). */
+export const figmaMyCourses = {
+	background: '#FFFFFF',
+	heading: '#1E3A8A',
+	accent: '#2563EB',
+	textMuted: '#6C6C6C',
+	buttonBg: '#2563EB',
+	buttonText: '#EFF6FF',
+	tabActiveBg: '#2563EB',
+	tabActiveText: '#EFF6FF',
+	tabInactiveBorder: '#2563EB',
+	tabInactiveText: '#1E3A8A',
+	cardBorder: '#FFFFFF',
+	cardShadow: 'rgba(37, 99, 235, 0.22)',
+	thumbOverlay: 'rgba(37, 99, 235, 0.32)',
+	progressTrack: '#D9D9D9',
+	progressFill: '#2563EB',
+	notificationCardBg: '#DBEAFE',
+	exploreLink: '#1E3A8A',
+	tabBarBg: '#2563EB',
+	tabBarIcon: '#FFFFFF',
+} as const
