@@ -473,6 +473,8 @@ const ja: TranslationSchema = {
     haveAccount: 'すでにアカウントをお持ちですか？',
     signInHere: 'ログインはこちら',
     fillAllFields: 'すべての項目を入力してください。',
+    invalidEmail: '有効なメールアドレスを入力してください（例: name@gmail.com）。',
+    oauthCancelled: 'ログインが完了しませんでした。ClerkのリダイレクトURLを確認してください。',
     socialComingSoon: 'ソーシャルログインは今後Clerkと連携予定です。',
     teacherParentAccess: '講師の方はこちら',
   },

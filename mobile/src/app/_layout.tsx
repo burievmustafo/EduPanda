@@ -121,7 +121,6 @@ function RootNavigator() {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="dev-roles" options={{ title: 'EduPanda', presentation: 'modal' }} />
           <Stack.Screen name="home" options={{ headerShown: false }} />
           <Stack.Screen name="notifications" options={{ headerShown: false }} />
           <Stack.Screen name="chat/[threadId]" options={{ headerShown: false }} />

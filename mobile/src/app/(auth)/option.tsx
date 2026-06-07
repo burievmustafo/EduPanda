@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Image, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { FigmaOutlineButton } from '@/components/auth/figma-outline-button'
@@ -47,14 +47,6 @@ export default function OptionScreen() {
 					/>
 				</View>
 
-				<Pressable
-					onPress={() => router.push('/dev-roles')}
-					style={styles.devLink}
-					accessibilityRole="link">
-					<AppText variant="small" style={styles.devText}>
-						{t('auth.teacherParentAccess')}
-					</AppText>
-				</Pressable>
 			</ScrollView>
 		</View>
 	)
@@ -98,14 +90,5 @@ const styles = StyleSheet.create({
 	halfBtn: {
 		flex: 1,
 		minWidth: 0,
-	},
-	devLink: {
-		marginTop: spacing['3xl'],
-		padding: spacing.sm,
-	},
-	devText: {
-		color: figmaAuth.textMuted,
-		textAlign: 'center',
-		textDecorationLine: 'underline',
 	},
 })

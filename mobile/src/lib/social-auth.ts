@@ -21,6 +21,14 @@ WebBrowser.maybeCompleteAuthSession()
 
 export type SocialStrategy = 'oauth_google' | 'oauth_facebook'
 
+/** Clerk Dashboard → Redirect URLs ga shu manzilni qo'shing. */
+export function getOAuthRedirectUrl() {
+	return AuthSession.makeRedirectUri({
+		scheme: 'edupanda',
+		path: 'sso-callback',
+	})
+}
+
 /** Android'da OAuth brauzerini oldindan isitadi (tezroq ochiladi). */
 function useWarmUpBrowser() {
 	useEffect(() => {
@@ -42,9 +50,10 @@ export function useSocialAuth() {
 
 	return useCallback(
 		async (strategy: SocialStrategy): Promise<boolean> => {
-			const { createdSessionId, setActive } = await startSSOFlow({
+			const redirectUrl = getOAuthRedirectUrl()
+			const { createdSessionId, setActive, authSessionResult } = await startSSOFlow({
 				strategy,
-				redirectUrl: AuthSession.makeRedirectUri(),
+				redirectUrl,
 			})
 
 			if (createdSessionId && setActive) {
@@ -52,8 +61,13 @@ export function useSocialAuth() {
 				return true
 			}
 
-			// createdSessionId yo'q — masalan MFA yoki profil to'ldirish kerak.
-			return false
+			if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
+				return false
+			}
+
+			throw new Error(
+				`OAuth did not complete. Add this redirect URL in Clerk Dashboard: ${redirectUrl}`,
+			)
 		},
 		[startSSOFlow]
 	)

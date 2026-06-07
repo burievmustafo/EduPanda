@@ -31,9 +31,25 @@ export default function ProfileTab() {
 	const { t } = useTranslation()
 	const insets = useSafeAreaInsets()
 	const theme = useFigmaTheme()
-	const { data: me, isLoading } = useMe()
+	const { data: apiMe, isLoading } = useMe()
 	const { user: clerkUser } = useUser()
 
+	const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress
+	const clerkName =
+		clerkUser?.fullName ||
+		clerkUser?.username ||
+		clerkEmail?.split('@')[0] ||
+		''
+	const me = apiMe ?? {
+		fullName: clerkName,
+		email: clerkEmail || '',
+		picture: undefined,
+	}
+	const displayName =
+		me?.fullName ||
+		clerkName ||
+		''
+	const displayEmail = me?.email || clerkEmail || ''
 	const avatarUri = resolveProfilePictureUri(me?.picture, clerkUser?.imageUrl)
 
 	const items: ProfileMenuItem[] = [
@@ -98,7 +114,7 @@ export default function ProfileTab() {
 									<Image source={{ uri: avatarUri }} style={styles.avatarImage} />
 								) : (
 									<AppText variant="h2" style={styles.avatarLetter}>
-										{getInitials(me?.fullName)}
+										{getInitials(displayName)}
 									</AppText>
 								)}
 							</Pressable>
@@ -108,7 +124,7 @@ export default function ProfileTab() {
 									{me?.fullName || '—'}
 								</AppText>
 								<AppText variant="caption" style={[styles.email, { color: theme.textMuted }]} numberOfLines={1}>
-									{me?.email || ''}
+									{displayEmail}
 								</AppText>
 							</View>
 

@@ -22,6 +22,7 @@ import { AppText } from '@/components/ui/app-text'
 import { figmaAuth } from '@/constants/figma-auth-theme'
 import { spacing } from '@/design/tokens'
 import { clerkErrorMessage } from '@/lib/clerk-error'
+import { isValidEmail } from '@/lib/email'
 import { useSocialAuth, type SocialStrategy } from '@/lib/social-auth'
 import { useSignUp } from '@clerk/clerk-expo'
 
@@ -41,6 +42,10 @@ export default function SignUpScreen() {
 	const onSubmit = async () => {
 		if (!name.trim() || !email.trim() || !password.trim()) {
 			Alert.alert(t('auth.signUp'), t('auth.fillAllFields'))
+			return
+		}
+		if (!isValidEmail(email)) {
+			Alert.alert(t('auth.signUp'), t('auth.invalidEmail'))
 			return
 		}
 		if (!isLoaded || !signUp) return
@@ -90,9 +95,10 @@ export default function SignUpScreen() {
 		try {
 			const done = await socialAuth(strategy)
 			if (done) {
-				// Ro'yxatdan o'tish/login bo'ldi — ClerkBridge /me dan rolni sinxronlaydi.
 				router.replace('/(tabs)/home')
+				return
 			}
+			Alert.alert(label, t('auth.oauthCancelled'))
 		} catch (err) {
 			Alert.alert(label, clerkErrorMessage(err))
 		} finally {

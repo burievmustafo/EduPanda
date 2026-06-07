@@ -16,11 +16,19 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://edu-panda-wine.vercel.app/en/api/mobile",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJzb2x1dGUtamF5LTgyLmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     },
     "production": {
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://edu-panda-wine.vercel.app/en/api/mobile",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YWJzb2x1dGUtamF5LTgyLmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     }
   },

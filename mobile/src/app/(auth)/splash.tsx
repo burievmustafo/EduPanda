@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/clerk-expo'
 import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
@@ -10,13 +11,14 @@ const SPLASH_MS = 2200
 
 export default function SplashScreen() {
 	const insets = useSafeAreaInsets()
-	const { hasCompletedOnboarding, isSignedIn, hydrated } = useAuthFlow()
+	const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn } = useAuth()
+	const { hasCompletedOnboarding, hydrated } = useAuthFlow()
 
 	useEffect(() => {
-		if (!hydrated) return
+		if (!hydrated || !clerkLoaded) return
 
 		const timer = setTimeout(() => {
-			if (isSignedIn) {
+			if (clerkSignedIn) {
 				router.replace('/(tabs)/home')
 				return
 			}
@@ -28,7 +30,7 @@ export default function SplashScreen() {
 		}, SPLASH_MS)
 
 		return () => clearTimeout(timer)
-	}, [hydrated, hasCompletedOnboarding, isSignedIn])
+	}, [hydrated, clerkLoaded, hasCompletedOnboarding, clerkSignedIn])
 
 	return (
 		<View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>

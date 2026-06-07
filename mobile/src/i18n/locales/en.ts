@@ -473,6 +473,8 @@ const en = {
     haveAccount: 'Already have an Account?',
     signInHere: 'Sign In here',
     fillAllFields: 'Please fill in all fields.',
+    invalidEmail: 'Enter a valid email (example: name@gmail.com).',
+    oauthCancelled: 'Sign-in was cancelled or could not finish. Check Clerk redirect URLs.',
     socialComingSoon: 'Social sign-in will connect to Clerk in a future update.',
     teacherParentAccess: 'Instructor? Open role picker',
   },
