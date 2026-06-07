@@ -31,6 +31,8 @@
     "dist",
     "dist/**",
     "dist-tc",
-    "dist-tc/**"
+    "dist-tc/**",
+    "scripts",
+    "scripts/**"
   ]
 }
