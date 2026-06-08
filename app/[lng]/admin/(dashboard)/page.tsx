@@ -7,17 +7,19 @@ import InstructorReviewCard from '@/components/cards/instructor-review.card'
 import InstructorCard from '@/components/cards/instructor.card'
 import StatisticsCard from '@/components/cards/statistics.card'
 import Header from '@/components/shared/header'
+import { translation } from '@/i18n/server'
 import { auth } from '@clerk/nextjs'
 import { MessageSquare, MonitorPlay, User } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import { GrMoney } from 'react-icons/gr'
 
-async function Page() {
+async function Page({ params }: { params: { lng: string } }) {
 	const { userId } = auth()
 	const user = await getRole(userId!)
 
 	if (!user.isAdmin) return redirect('/')
 
+	const { t } = await translation(params.lng)
 	const courseData = await getAdminCourses({})
 	const reviewData = await getAdminReviews({})
 	const instructorData = await getAdminInstructors({})
@@ -25,21 +27,21 @@ async function Page() {
 
 	return (
 		<>
-			<Header title='Dashboard' description='Welcome to your dashboard' />
+			<Header title={t('dashboard')} description={t('welcomeDashboard')} />
 
 			<div className='mt-4 grid grid-cols-4 gap-4'>
 				<StatisticsCard
-					label='All Courses'
+					label={t('allCourses')}
 					value={`${courseData.totalCourses}`}
 					Icon={MonitorPlay}
 				/>
 				<StatisticsCard
-					label='Reviews'
+					label={t('reviews')}
 					value={`${reviewData.totalReviews}`}
 					Icon={MessageSquare}
 				/>
 				<StatisticsCard
-					label='Total Sales'
+					label={t('totalSales')}
 					value={`${(balance / 100).toLocaleString('en-US', {
 						style: 'currency',
 						currency: 'USD',
@@ -47,16 +49,13 @@ async function Page() {
 					Icon={GrMoney}
 				/>
 				<StatisticsCard
-					label='Instructors'
+					label={t('instructors')}
 					value={`${instructorData.totalInstructors}`}
 					Icon={User}
 				/>
 			</div>
 
-			<Header
-				title='All Courses'
-				description='Here are all the courses you have'
-			/>
+			<Header title={t('allCourses')} description={t('allCoursesDesc')} />
 			<div className='mt-4 grid grid-cols-3 gap-4'>
 				{courseData.courses.map(course => (
 					<AdminCourseCard
@@ -66,7 +65,7 @@ async function Page() {
 				))}
 			</div>
 
-			<Header title='Reviews' description='Here are your latest reviews' />
+			<Header title={t('reviews')} description={t('latestReviewsDesc')} />
 			<div className='mt-4 grid grid-cols-3 gap-4'>
 				{reviewData.reviews.map(review => (
 					<InstructorReviewCard
@@ -77,7 +76,7 @@ async function Page() {
 				))}
 			</div>
 
-			<Header title='Instructors' description='Here are your instructors' />
+			<Header title={t('instructors')} description={t('adminInstructorsDesc')} />
 			<div className='mt-4 grid grid-cols-4 gap-4'>
 				{instructorData.instructors.map(item => (
 					<InstructorCard

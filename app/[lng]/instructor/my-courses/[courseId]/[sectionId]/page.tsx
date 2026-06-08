@@ -10,11 +10,13 @@ import Lessons from './_components/lessons'
 import { getLessons } from '@/actions/lesson.action'
 import { getSectionQuiz } from '@/actions/quiz.action'
 import SectionQuiz from './_components/section-quiz'
+import { translation } from '@/i18n/server'
 
 interface Params {
-	params: { sectionId: string; courseId: string }
+	params: { sectionId: string; courseId: string; lng: string }
 }
 async function Page({ params }: Params) {
+	const { t } = await translation(params.lng)
 	const sectionJSON = await getSectionById(params.sectionId)
 	const lessonsJSON = await getLessons(params.sectionId)
 	const quizData = await getSectionQuiz(params.sectionId)
@@ -26,14 +28,14 @@ async function Page({ params }: Params) {
 		<>
 			<div className='flex items-center justify-between'>
 				<div className='flex items-center gap-2'>
-					<Link href={`/en/instructor/my-courses/${params.courseId}`}>
+					<Link href={`/${params.lng}/instructor/my-courses/${params.courseId}`}>
 						<Button size={'icon'} variant={'outline'}>
 							<ChevronLeftCircle />
 						</Button>
 					</Link>
 					<Header
 						title={section.title}
-						description='Manage your section and see how it is performing.'
+						description={t('manageSectionDesc')}
 					/>
 				</div>
 				<Action {...section} />
@@ -44,7 +46,7 @@ async function Page({ params }: Params) {
 				<div className='flex flex-col space-y-2'>
 					<div className='flex items-center gap-2'>
 						<span className='font-space-grotesk text-3xl font-medium'>
-							Lessons
+							{t('lessons')}
 						</span>{' '}
 						<Settings2 />
 					</div>
@@ -53,7 +55,7 @@ async function Page({ params }: Params) {
 				<div className='flex flex-col space-y-2'>
 					<div className='flex items-center gap-2'>
 						<span className='font-space-grotesk text-3xl font-medium'>
-							Section field
+							{t('sectionField')}
 						</span>{' '}
 						<Settings />
 					</div>
@@ -64,7 +66,7 @@ async function Page({ params }: Params) {
 			<div className='mt-6 flex flex-col space-y-2'>
 				<div className='flex items-center gap-2'>
 					<span className='font-space-grotesk text-3xl font-medium'>
-						Section Quiz
+						{t('sectionQuiz')}
 					</span>{' '}
 					<ListChecks />
 				</div>

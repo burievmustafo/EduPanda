@@ -12,8 +12,10 @@ import Sections from './_components/sections'
 import Price from './_components/price'
 import PreviewImage from './_components/preview-image'
 import { getSections } from '@/actions/section.action'
+import { translation } from '@/i18n/server'
 
-async function Page({ params }: { params: { courseId: string } }) {
+async function Page({ params }: { params: { courseId: string; lng: string } }) {
+	const { t } = await translation(params.lng)
 	const courseJSON = await getCourseById(params.courseId)
 	const sectionsJSON = await getSections(params.courseId)
 
@@ -25,7 +27,7 @@ async function Page({ params }: { params: { courseId: string } }) {
 			<div className='flex items-center justify-between'>
 				<Header
 					title={course.title}
-					description='Manage your course and see how it is performing.'
+					description={t('manageCourseDesc')}
 				/>
 				<Actions {...course} />
 			</div>
@@ -35,7 +37,7 @@ async function Page({ params }: { params: { courseId: string } }) {
 				<div className='flex flex-col space-y-2'>
 					<div className='flex items-center gap-2'>
 						<span className='font-space-grotesk text-3xl font-medium'>
-							Course Fields
+							{t('courseFields')}
 						</span>{' '}
 						<Settings />
 					</div>
@@ -47,19 +49,17 @@ async function Page({ params }: { params: { courseId: string } }) {
 					<Price {...course} />
 				</div>
 				<div className='flex flex-col space-y-2'>
-					{/* Sections */}
 					<div className='flex items-center gap-2'>
 						<span className='font-space-grotesk text-3xl font-medium'>
-							Course Sections
+							{t('courseSections')}
 						</span>{' '}
 						<LayoutPanelLeft />
 					</div>
 					<Sections course={course} sections={sections} />
 
-					{/* Preview image */}
 					<div className='flex items-center gap-2'>
 						<span className='font-space-grotesk text-3xl font-medium'>
-							Preview Image
+							{t('previewImage')}
 						</span>{' '}
 						<Images />
 					</div>

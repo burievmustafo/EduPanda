@@ -10,39 +10,41 @@ import InstructorCourseCard from '@/components/cards/instructor-course.card'
 import { formatAndDivideNumber } from '@/lib/utils'
 import { getReviews } from '@/actions/review.action'
 import { getRole } from '@/actions/user.action'
+import { translation } from '@/i18n/server'
 import { redirect } from 'next/navigation'
 
-async function Page() {
+async function Page({ params }: { params: { lng: string } }) {
 	const { userId } = auth()
 	const user = await getRole(userId!)
 
 	if (user.role !== 'instructor') return redirect('/')
 
+	const { t } = await translation(params.lng)
 	const result = await getCourses({ clerkId: userId! })
 	const { reviews, totalReviews } = await getReviews({ clerkId: userId! })
 
 	return (
 		<>
-			<Header title='Dashboard' description='Welcome to your dashboard' />
+			<Header title={t('dashboard')} description={t('welcomeDashboard')} />
 
 			<div className='mt-4 grid grid-cols-4 gap-4'>
 				<StatisticsCard
-					label='Total courses'
+					label={t('totalCourses')}
 					value={result.totalCourses.toString()}
 					Icon={MonitorPlay}
 				/>
 				<StatisticsCard
-					label='Total students'
+					label={t('totalStudents')}
 					value={formatAndDivideNumber(result.totalStudents)}
 					Icon={PiStudent}
 				/>
 				<StatisticsCard
-					label='Reviews'
+					label={t('reviews')}
 					value={formatAndDivideNumber(totalReviews)}
 					Icon={MessageSquare}
 				/>
 				<StatisticsCard
-					label='Total Sales'
+					label={t('totalSales')}
 					value={result.totalEearnings.toLocaleString('en-US', {
 						style: 'currency',
 						currency: 'USD',
@@ -51,10 +53,7 @@ async function Page() {
 				/>
 			</div>
 
-			<Header
-				title='Latest courses'
-				description='Here are your latest courses'
-			/>
+			<Header title={t('latestCourses')} description={t('latestCoursesDesc')} />
 
 			<div className='mt-4 grid grid-cols-3 gap-4'>
 				{result.courses.map(course => (
@@ -65,7 +64,7 @@ async function Page() {
 				))}
 			</div>
 
-			<Header title='Reviews' description='Here are your latest reviews' />
+			<Header title={t('reviews')} description={t('latestReviewsDesc')} />
 
 			<div className='mt-4 grid grid-cols-3 gap-4'>
 				{reviews.map(review => (

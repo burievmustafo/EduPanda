@@ -6,8 +6,10 @@ import { Separator } from '@/components/ui/separator'
 import { ChevronLeftCircle } from 'lucide-react'
 import Link from 'next/link'
 import StudentsManager from './_components/students-manager'
+import { translation } from '@/i18n/server'
 
-async function Page({ params }: { params: { courseId: string } }) {
+async function Page({ params }: { params: { courseId: string; lng: string } }) {
+	const { t } = await translation(params.lng)
 	const courseJSON = await getCourseById(params.courseId)
 	const course = JSON.parse(JSON.stringify(courseJSON))
 	const students = await getCourseStudents(params.courseId)
@@ -15,14 +17,14 @@ async function Page({ params }: { params: { courseId: string } }) {
 	return (
 		<>
 			<div className='flex items-center gap-2'>
-				<Link href={`/en/instructor/my-courses/${params.courseId}`}>
+				<Link href={`/${params.lng}/instructor/my-courses/${params.courseId}`}>
 					<Button size={'icon'} variant={'outline'}>
 						<ChevronLeftCircle />
 					</Button>
 				</Link>
 				<Header
-					title={`${course.title} — Students`}
-					description='See who is enrolled and how they are doing.'
+					title={`${course.title} — ${t('students')}`}
+					description={t('studentsDesc')}
 				/>
 			</div>
 			<Separator className='my-3 bg-muted-foreground' />
