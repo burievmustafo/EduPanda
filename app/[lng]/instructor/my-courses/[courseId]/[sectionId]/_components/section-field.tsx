@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { sectionSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -27,12 +28,13 @@ import { z } from 'zod'
 
 function SectionField(section: ISection) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Title</span>
+					<span className='text-lg font-medium'>{t('titleLabel')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -43,7 +45,7 @@ function SectionField(section: ISection) {
 				) : (
 					<div className='flex items-center gap-2'>
 						<span className='self-start font-space-grotesk font-bold text-muted-foreground'>
-							Title:
+							{t('titleColon')}
 						</span>
 						<span className='line-clamp-3 font-medium'>{section.title}</span>
 					</div>
@@ -61,7 +63,7 @@ interface FormsProps {
 }
 function Forms({ section, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
-
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const form = useForm<z.infer<typeof sectionSchema>>({
@@ -76,9 +78,9 @@ function Forms({ section, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully created!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -93,7 +95,7 @@ function Forms({ section, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Section title
+									{t('sectionTitleLabel')}
 									<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
@@ -101,7 +103,7 @@ function Forms({ section, onToggle }: FormsProps) {
 										{...field}
 										className='bg-secondary'
 										disabled={isLoading}
-										placeholder='e.g. Introduction to the course'
+										placeholder={t('sectionPlaceholder')}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -109,7 +111,7 @@ function Forms({ section, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { BadgePlus, CheckCircle2, Trash2, X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -21,7 +22,6 @@ import QuestionForm, { INormalizedQuestion } from './question-form'
 
 const MAX_QUESTIONS = 10
 
-// Matnni mavjud tilda ko'rsatadi (en yoki ja).
 const pick = (v?: { en?: string; ja?: string }) => v?.en || v?.ja || ''
 
 interface Props {
@@ -34,6 +34,7 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 	const [isLoading, setIsLoading] = useState(false)
 	const [passScore, setPassScore] = useState(`${quiz?.passScore ?? 70}`)
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	const path = usePathname()
 	const isFull = questions.length >= MAX_QUESTIONS
@@ -44,9 +45,9 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 			setIsLoading(false)
 		)
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Quiz created!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyCreated'),
+			error: t('error'),
 		})
 	}
 
@@ -59,9 +60,9 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 			path,
 		}).finally(() => setIsLoading(false))
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Saved!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('save'),
+			error: t('error'),
 		})
 	}
 
@@ -74,16 +75,16 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 	}
 
 	const onDelete = (questionId: string) => {
-		const isConfirmed = confirm('Delete this question?')
+		const isConfirmed = confirm(t('deleteQuestion') + '?')
 		if (!isConfirmed) return
 		setIsLoading(true)
 		const promise = deleteQuizQuestion(questionId, path).finally(() =>
 			setIsLoading(false)
 		)
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Deleted!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyDeleted'),
+			error: t('error'),
 		})
 	}
 
@@ -93,14 +94,14 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 				{isLoading && <FillLoading />}
 
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Manage section quiz</span>
+					<span className='text-lg font-medium'>{t('manageQuiz')}</span>
 					{quiz && (
 						<Button
 							size={'icon'}
 							variant={'ghost'}
 							onClick={onToggle}
 							disabled={isFull}
-							title={isFull ? `Maximum ${MAX_QUESTIONS} questions` : 'Add question'}
+							title={isFull ? `Maximum ${MAX_QUESTIONS} questions` : t('addQuestion')}
 						>
 							{state ? <X /> : <BadgePlus />}
 						</Button>
@@ -110,18 +111,15 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 
 				{!quiz ? (
 					<div className='flex flex-col items-start gap-3'>
-						<p className='text-sm text-muted-foreground'>
-							This section has no final quiz yet. Create one to add up to{' '}
-							{MAX_QUESTIONS} questions students take after watching the videos.
-						</p>
-						<Button onClick={onCreate}>Create section quiz</Button>
+						<p className='text-sm text-muted-foreground'>{t('noQuizDesc')}</p>
+						<Button onClick={onCreate}>{t('createSectionQuiz')}</Button>
 					</div>
 				) : (
 					<div className='space-y-4'>
 						<div className='flex flex-wrap items-end gap-3'>
 							<div className='space-y-1'>
 								<label className='text-xs font-medium text-muted-foreground'>
-									Pass score (%)
+									{t('passScore')}
 								</label>
 								<Input
 									type='number'
@@ -133,24 +131,24 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 								/>
 							</div>
 							<Button variant={'outline'} size={'sm'} onClick={onSavePassScore}>
-								Save
+								{t('save')}
 							</Button>
 							<span className='ml-auto text-sm text-muted-foreground'>
-								Questions: {questions.length} / {MAX_QUESTIONS}
+								{t('quizzes')}: {questions.length} / {MAX_QUESTIONS}
 							</span>
 						</div>
 
 						{state && (
 							<>
 								<Separator />
-								<QuestionForm submitLabel='Add question' onSubmit={onAdd} />
+								<QuestionForm submitLabel={t('addQuestion')} onSubmit={onAdd} />
 							</>
 						)}
 
 						<Separator />
 
 						{!questions.length ? (
-							<p className='text-sm text-muted-foreground'>No questions yet</p>
+							<p className='text-sm text-muted-foreground'>{t('noQuestionsYet')}</p>
 						) : (
 							<div className='space-y-3'>
 								{questions.map((q, index) => (

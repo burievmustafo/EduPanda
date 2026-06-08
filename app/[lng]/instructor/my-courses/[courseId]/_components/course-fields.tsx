@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { courseFieldsSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -26,12 +27,13 @@ import { z } from 'zod'
 
 function CourseFields(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Course Title</span>
+					<span className='text-lg font-medium'>{t('courseTitle')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -44,16 +46,16 @@ function CourseFields(course: ICourse) {
 					<div className='flex flex-col space-y-2'>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Title:
+								{t('titleLabel')}:
 							</span>
 							<span className='font-medium'>{course.title}</span>
 						</div>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Slug:
+								{t('slugLabel')}:
 							</span>
 							<span className='font-medium'>
-								{course.slug ?? 'Not configured'}
+								{course.slug ?? t('notConfigured')}
 							</span>
 						</div>
 					</div>
@@ -82,6 +84,8 @@ function Forms({ course, onToggle }: FormsProps) {
 		},
 	})
 
+	const t = useTranslate()
+
 	const onSubmit = (values: z.infer<typeof courseFieldsSchema>) => {
 		setIsLoading(true)
 		const promise = updateCourse(course._id, values, pathname)
@@ -89,9 +93,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -125,7 +129,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

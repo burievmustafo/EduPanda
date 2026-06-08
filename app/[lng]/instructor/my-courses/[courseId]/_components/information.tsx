@@ -15,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { informationSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -26,12 +27,13 @@ import { z } from 'zod'
 
 function Information(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Information</span>
+					<span className='text-lg font-medium'>{t('informationLabel')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -44,7 +46,7 @@ function Information(course: ICourse) {
 					<div className='flex flex-col space-y-2'>
 						<div className='grid grid-cols-3 gap-2'>
 							<div className='col-span-1 font-space-grotesk font-bold text-muted-foreground'>
-								Requirements:
+								{t('requirements')}:
 							</div>
 							<div className='col-span-2 line-clamp-3'>
 								{course.requirements}
@@ -52,13 +54,13 @@ function Information(course: ICourse) {
 						</div>
 						<div className='grid grid-cols-3 gap-2'>
 							<div className='col-span-1 font-space-grotesk font-bold text-muted-foreground'>
-								Learning:
+								{t('learningLabel')}:
 							</div>
 							<div className='col-span-2 line-clamp-3'>{course.learning}</div>
 						</div>
 						<div className='grid grid-cols-3 gap-2'>
 							<div className='col-span-1 font-space-grotesk font-bold text-muted-foreground'>
-								Tags:
+								{t('tagsLabel')}:
 							</div>
 							<div className='col-span-2 line-clamp-3'>{course.tags}</div>
 						</div>
@@ -77,7 +79,7 @@ interface FormsProps {
 }
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
-
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const form = useForm<z.infer<typeof informationSchema>>({
@@ -96,9 +98,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -144,7 +146,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

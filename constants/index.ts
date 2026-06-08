@@ -277,15 +277,15 @@ export const editorConfig = {
 }
 
 export const instructorNavLinks = [
-	{ label: 'Dashboard', route: '/instructor', icon: GaugeCircle },
-	{ label: 'My Courses', route: '/instructor/my-courses', icon: MonitorPlay },
+	{ label: 'dashboard', route: '/instructor', icon: GaugeCircle },
+	{ label: 'myCourses', route: '/instructor/my-courses', icon: MonitorPlay },
 	{
-		label: 'Create Course',
+		label: 'createCourse',
 		route: '/instructor/create-course',
 		icon: FileCode,
 	},
-	{ label: 'Reviews', route: '/instructor/reviews', icon: MessageSquareMore },
-	{ label: 'Settings', route: '/instructor/settings', icon: Settings2 },
+	{ label: 'reviews', route: '/instructor/reviews', icon: MessageSquareMore },
+	{ label: 'settings', route: '/instructor/settings', icon: Settings2 },
 ]
 
 export const profileNavLinks = [
@@ -299,11 +299,11 @@ export const profileNavLinks = [
 ]
 
 export const adminNavLinks = [
-	{ label: 'Dashboard', route: '/admin', icon: GaugeCircle },
-	{ label: 'All courses', route: '/admin/all-courses', icon: MonitorPlay },
-	{ label: 'Instructors', route: '/admin/instructors', icon: User },
-	{ label: 'Reviews', route: '/admin/reviews', icon: MessageSquareMore },
-	{ label: 'Notifications', route: '/admin/notifications', icon: Bell },
+	{ label: 'dashboard', route: '/admin', icon: GaugeCircle },
+	{ label: 'allCourses', route: '/admin/all-courses', icon: MonitorPlay },
+	{ label: 'instructors', route: '/admin/instructors', icon: User },
+	{ label: 'reviews', route: '/admin/reviews', icon: MessageSquareMore },
+	{ label: 'notifications', route: '/admin/notifications', icon: Bell },
 ]
 
 export const amountOptions = [

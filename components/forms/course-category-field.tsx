@@ -16,6 +16,7 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { COURSE_CATEGORY_OTHER, courseCategory } from '@/constants'
+import useTranslate from '@/hooks/use-translate'
 import type { Control, FieldPath, FieldValues } from 'react-hook-form'
 import { useWatch } from 'react-hook-form'
 
@@ -33,6 +34,7 @@ export function CourseCategoryField<T extends FieldValues>({
 	disabled,
 }: Props<T>) {
 	const category = useWatch({ control, name: categoryName })
+	const t = useTranslate()
 
 	return (
 		<div className='space-y-3'>
@@ -42,7 +44,7 @@ export function CourseCategoryField<T extends FieldValues>({
 				render={({ field }) => (
 					<FormItem>
 						<FormLabel>
-							Category<span className='text-red-500'>*</span>
+							{t('category')}<span className='text-red-500'>*</span>
 						</FormLabel>
 						<FormControl>
 							<Select
@@ -51,12 +53,12 @@ export function CourseCategoryField<T extends FieldValues>({
 								disabled={disabled}
 							>
 								<SelectTrigger className='w-full bg-secondary'>
-									<SelectValue placeholder='Select' />
+									<SelectValue placeholder={t('filter')} />
 								</SelectTrigger>
 								<SelectContent>
 									{courseCategory.map((item) => (
 										<SelectItem key={item} value={item}>
-											{item === COURSE_CATEGORY_OTHER ? 'Other' : item}
+											{item === COURSE_CATEGORY_OTHER ? t('other') : item}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -74,7 +76,7 @@ export function CourseCategoryField<T extends FieldValues>({
 					render={({ field }) => (
 						<FormItem>
 							<FormLabel>
-								Custom category<span className='text-red-500'>*</span>
+								{t('customCategory')}<span className='text-red-500'>*</span>
 							</FormLabel>
 							<FormControl>
 								<Input

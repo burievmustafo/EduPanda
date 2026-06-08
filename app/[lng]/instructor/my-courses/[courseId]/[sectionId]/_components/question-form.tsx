@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import useTranslate from '@/hooks/use-translate'
 import { questionSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -56,6 +57,8 @@ function QuestionForm({
 	onSubmit,
 	onCancel,
 }: Props) {
+	const t = useTranslate()
+
 	const form = useForm<z.infer<typeof questionSchema>>({
 		resolver: zodResolver(questionSchema),
 		defaultValues: {
@@ -88,9 +91,9 @@ function QuestionForm({
 
 		const promise = onSubmit(normalized).then(() => form.reset())
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully!',
-			error: err => (err instanceof Error ? err.message : 'Something went wrong!'),
+			loading: t('loading'),
+			success: t('successfully'),
+			error: err => (err instanceof Error ? err.message : t('error')),
 		})
 	}
 
@@ -102,7 +105,7 @@ function QuestionForm({
 					name='language'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Question language (match the video)</FormLabel>
+							<FormLabel>{t('questionLanguage')}</FormLabel>
 							<FormControl>
 								<div className='flex gap-2'>
 									{(['en', 'ja'] as const).map(lng => (
@@ -113,7 +116,7 @@ function QuestionForm({
 											variant={field.value === lng ? 'default' : 'outline'}
 											onClick={() => field.onChange(lng)}
 										>
-											{lng === 'en' ? 'English' : '日本語'}
+											{lng === 'en' ? t('langEnglish') : '日本語'}
 										</Button>
 									))}
 								</div>
@@ -129,7 +132,7 @@ function QuestionForm({
 						name='triggerTimeSec'
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Trigger time (seconds)</FormLabel>
+								<FormLabel>{t('triggerTime')}</FormLabel>
 								<FormControl>
 									<Input
 										type='number'
@@ -150,10 +153,10 @@ function QuestionForm({
 					name='question'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Question</FormLabel>
+							<FormLabel>{t('questionLabel')}</FormLabel>
 							<FormControl>
 								<Textarea
-									placeholder='Type your question'
+									placeholder={t('questionPlaceholder')}
 									className='bg-secondary'
 									{...field}
 								/>
@@ -168,7 +171,7 @@ function QuestionForm({
 					name='correct'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Options (select the correct one)</FormLabel>
+							<FormLabel>{t('optionsLabel')}</FormLabel>
 							<FormControl>
 								<RadioGroup
 									value={field.value}
@@ -185,7 +188,7 @@ function QuestionForm({
 													<FormItem className='flex-1'>
 														<FormControl>
 															<Input
-																placeholder={`Option ${id.toUpperCase()}`}
+																placeholder={`${t('optionLabel')} ${id.toUpperCase()}`}
 																className='bg-secondary'
 																{...optField}
 																value={optField.value as string}
@@ -209,10 +212,10 @@ function QuestionForm({
 					name='explanation'
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Explanation (optional)</FormLabel>
+							<FormLabel>{t('explanationLabel')}</FormLabel>
 							<FormControl>
 								<Textarea
-									placeholder='Why is this the correct answer?'
+									placeholder={t('explanationPlaceholder')}
 									className='bg-secondary'
 									{...field}
 								/>
@@ -226,7 +229,7 @@ function QuestionForm({
 					<Button type='submit'>{submitLabel}</Button>
 					{onCancel && (
 						<Button variant='destructive' type='button' onClick={onCancel}>
-							Cancel
+							{t('cancel')}
 						</Button>
 					)}
 				</div>

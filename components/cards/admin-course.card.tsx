@@ -9,9 +9,11 @@ import { usePathname } from 'next/navigation'
 import { updateCourse } from '@/actions/course.action'
 import { sendNotification } from '@/actions/notification.action'
 import { toast } from 'sonner'
+import useTranslate from '@/hooks/use-translate'
 
 function AdminCourseCard({ course }: { course: ICourse }) {
 	const pathname = usePathname()
+	const t = useTranslate()
 
 	const onToggleStatus = () => {
 		let upd
@@ -34,9 +36,9 @@ function AdminCourseCard({ course }: { course: ICourse }) {
 		const promise = Promise.all([upd, not])
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -78,7 +80,7 @@ function AdminCourseCard({ course }: { course: ICourse }) {
 						variant={course.published ? 'destructive' : 'default'}
 						onClick={onToggleStatus}
 					>
-						{course.published ? 'Unpublish' : 'Publish'}
+						{course.published ? t('unpublish') : t('publish')}
 					</Button>
 				</div>
 			</div>

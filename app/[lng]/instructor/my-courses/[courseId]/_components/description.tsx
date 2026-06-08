@@ -15,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { descriptionSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -26,12 +27,13 @@ import { z } from 'zod'
 
 function Description(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Description</span>
+					<span className='text-lg font-medium'>{t('descriptionLabel')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -43,7 +45,7 @@ function Description(course: ICourse) {
 				) : (
 					<div className='flex items-center gap-2'>
 						<span className='self-start font-space-grotesk font-bold text-muted-foreground'>
-							Description:
+							{t('descriptionLabel')}:
 						</span>
 						<span className='line-clamp-3 font-medium'>
 							{course.description}
@@ -63,7 +65,7 @@ interface FormsProps {
 }
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
-
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const form = useForm<z.infer<typeof descriptionSchema>>({
@@ -80,9 +82,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -104,7 +106,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import useTranslate from '@/hooks/use-translate'
 import { profileSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CandlestickChart, Github, Linkedin, Youtube } from 'lucide-react'
@@ -29,6 +30,7 @@ function Account(user: IUser) {
 
 	const [isLoading, setIsLoading] = useState(false)
 	const pathname = usePathname()
+	const t = useTranslate()
 
 	const form = useForm<z.infer<typeof profileSchema>>({
 		resolver: zodResolver(profileSchema),
@@ -44,9 +46,9 @@ function Account(user: IUser) {
 		}).finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong. Please try again.',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -62,7 +64,7 @@ function Account(user: IUser) {
 								name='job'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Your job</FormLabel>
+										<FormLabel>{t('yourJob')}</FormLabel>
 										<FormControl>
 											<Input
 												{...field}
@@ -80,7 +82,7 @@ function Account(user: IUser) {
 								name='phone'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Mobile phone</FormLabel>
+										<FormLabel>{t('mobilePhone')}</FormLabel>
 										<FormControl>
 											<Input
 												{...field}
@@ -99,7 +101,7 @@ function Account(user: IUser) {
 								name='website'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Website</FormLabel>
+										<FormLabel>{t('website')}</FormLabel>
 										<FormControl>
 											<div className='flex items-center bg-secondary pr-2'>
 												<Input
@@ -120,7 +122,7 @@ function Account(user: IUser) {
 								name='github'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>GitHub</FormLabel>
+										<FormLabel>{t('githubLabel')}</FormLabel>
 										<FormControl>
 											<div className='flex items-center bg-secondary pr-2'>
 												<Input
@@ -141,7 +143,7 @@ function Account(user: IUser) {
 								name='linkedin'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>LinkedIn</FormLabel>
+										<FormLabel>{t('linkedinLabel')}</FormLabel>
 										<FormControl>
 											<div className='flex items-center bg-secondary pr-2'>
 												<Input
@@ -162,14 +164,14 @@ function Account(user: IUser) {
 								name='youtube'
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Yuutube</FormLabel>
+										<FormLabel>{t('youtubeLabel')}</FormLabel>
 										<FormControl>
 											<div className='flex items-center bg-secondary pr-2'>
 												<Input
 													{...field}
 													className='bg-secondary'
 													disabled={isLoading}
-													placeholder='e.g. www.linkedin.com'
+													placeholder='e.g. www.youtube.com'
 												/>
 												<Youtube className='text-muted-foreground' />
 											</div>
@@ -184,7 +186,7 @@ function Account(user: IUser) {
 							name='bio'
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Bio</FormLabel>
+									<FormLabel>{t('bio')}</FormLabel>
 									<FormControl>
 										<Textarea
 											{...field}
@@ -197,7 +199,7 @@ function Account(user: IUser) {
 								</FormItem>
 							)}
 						/>
-						<Button type='submit'>Save</Button>
+						<Button type='submit'>{t('save')}</Button>
 					</form>
 				</Form>
 			</CardContent>

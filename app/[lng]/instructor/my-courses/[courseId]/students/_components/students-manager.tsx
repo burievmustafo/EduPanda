@@ -14,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@/components/ui/table'
+import useTranslate from '@/hooks/use-translate'
 import { Loader2, UserPlus } from 'lucide-react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -45,29 +46,30 @@ function StudentsManager({ courseId, students }: Props) {
 	const [granting, setGranting] = useState(false)
 	const [revokingId, setRevokingId] = useState('')
 	const path = usePathname()
+	const t = useTranslate()
 
 	const onGrant = async () => {
 		if (!email.trim()) return
 		setGranting(true)
 		try {
 			await grantCourseAccess({ courseId, email, path })
-			toast.success('Access granted')
+			toast.success(t('accessGranted'))
 			setEmail('')
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Something went wrong!')
+			toast.error(err instanceof Error ? err.message : t('error'))
 		} finally {
 			setGranting(false)
 		}
 	}
 
 	const onRevoke = async (studentId: string) => {
-		if (!confirm('Remove this student from the course?')) return
+		if (!confirm(t('remove') + '?')) return
 		setRevokingId(studentId)
 		try {
 			await revokeCourseAccess({ courseId, studentId, path })
-			toast.success('Access removed')
+			toast.success(t('accessRemoved'))
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Something went wrong!')
+			toast.error(err instanceof Error ? err.message : t('error'))
 		} finally {
 			setRevokingId('')
 		}
@@ -75,13 +77,12 @@ function StudentsManager({ courseId, students }: Props) {
 
 	return (
 		<div className='space-y-4'>
-			{/* Grant access */}
 			<Card>
 				<CardContent className='flex flex-col gap-3 p-4 sm:flex-row sm:items-center'>
 					<div className='flex-1'>
-						<p className='text-sm font-medium'>Give a student access</p>
+						<p className='text-sm font-medium'>{t('giveStudentAccess')}</p>
 						<p className='text-xs text-muted-foreground'>
-							Enter the student&apos;s email to open this course for free.
+							{t('giveStudentAccessDesc')}
 						</p>
 					</div>
 					<div className='flex w-full gap-2 sm:w-auto'>
@@ -99,29 +100,28 @@ function StudentsManager({ courseId, students }: Props) {
 							) : (
 								<UserPlus className='size-4' />
 							)}
-							<span className='ml-2 max-sm:hidden'>Grant</span>
+							<span className='ml-2 max-sm:hidden'>{t('grant')}</span>
 						</Button>
 					</div>
 				</CardContent>
 			</Card>
 
-			{/* Students table */}
 			<Card>
 				<CardContent className='p-0'>
 					{students.length === 0 ? (
 						<p className='p-6 text-sm text-muted-foreground'>
-							No students enrolled yet.
+							{t('noStudentsYet')}
 						</p>
 					) : (
 						<Table>
 							<TableHeader>
 								<TableRow>
-									<TableHead>Student</TableHead>
-									<TableHead>Progress</TableHead>
-									<TableHead>Quizzes</TableHead>
-									<TableHead>Avg score</TableHead>
-									<TableHead>Access</TableHead>
-									<TableHead className='text-right'>Action</TableHead>
+									<TableHead>{t('studentLabel')}</TableHead>
+									<TableHead>{t('progress')}</TableHead>
+									<TableHead>{t('quizzes')}</TableHead>
+									<TableHead>{t('avgScore')}</TableHead>
+									<TableHead>{t('access')}</TableHead>
+									<TableHead className='text-right'>{t('action')}</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -156,7 +156,7 @@ function StudentsManager({ courseId, students }: Props) {
 												<span className='text-xs'>{s.progressPercent}%</span>
 											</div>
 											<span className='text-xs text-muted-foreground'>
-												{s.completedLessons}/{s.totalLessons} lessons
+												{s.completedLessons}/{s.totalLessons} {t('lessons')}
 											</span>
 										</TableCell>
 										<TableCell>
@@ -164,9 +164,9 @@ function StudentsManager({ courseId, students }: Props) {
 												<span className='text-xs text-muted-foreground'>—</span>
 											) : (
 												<span className='text-sm'>
-													{s.passedCount}/{s.quizzesTotal} passed
+													{s.passedCount}/{s.quizzesTotal} {t('passed')}
 													<span className='block text-xs text-muted-foreground'>
-														{s.quizzesTaken} taken
+														{s.quizzesTaken} {t('taken')}
 													</span>
 												</span>
 											)}
@@ -191,10 +191,10 @@ function StudentsManager({ courseId, students }: Props) {
 												variant={s.source === 'admin' ? 'secondary' : 'outline'}
 											>
 												{s.source === 'admin'
-													? 'Granted'
+													? t('granted')
 													: s.source === 'mock'
 														? 'Mock'
-														: 'Purchased'}
+														: t('purchased')}
 											</Badge>
 										</TableCell>
 										<TableCell className='text-right'>
@@ -207,7 +207,7 @@ function StudentsManager({ courseId, students }: Props) {
 												{revokingId === s.studentId ? (
 													<Loader2 className='size-4 animate-spin' />
 												) : (
-													'Remove'
+													t('remove')
 												)}
 											</Button>
 										</TableCell>

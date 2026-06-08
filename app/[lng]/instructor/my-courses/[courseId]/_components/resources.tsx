@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { Edit2, Plus, Trash2, X } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -19,12 +20,13 @@ function emptyRow(): ICourseResource {
 
 function Resources(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Resources</span>
+					<span className='text-lg font-medium'>{t('resources')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -48,7 +50,7 @@ function Resources(course: ICourse) {
 						))}
 						{!course.resources?.length ? (
 							<p className='text-sm text-muted-foreground'>
-								No resources yet. Add book links or materials for students.
+								{t('noResourcesYet')}
 							</p>
 						) : null}
 					</div>
@@ -69,6 +71,7 @@ function ResourcesForm({
 		course.resources?.length ? course.resources : [emptyRow()]
 	)
 	const [isLoading, setIsLoading] = useState(false)
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const onSave = () => {
@@ -86,9 +89,9 @@ function ResourcesForm({
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Resources saved!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('resourcesSaved'),
+			error: t('error'),
 		})
 	}
 
@@ -143,10 +146,10 @@ function ResourcesForm({
 						onClick={() => setRows((prev) => [...prev, emptyRow()])}
 					>
 						<Plus className='mr-1 size-4' />
-						Add resource
+						{t('addResource')}
 					</Button>
 					<Button type='button' size='sm' onClick={onSave} disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</div>
 			</div>

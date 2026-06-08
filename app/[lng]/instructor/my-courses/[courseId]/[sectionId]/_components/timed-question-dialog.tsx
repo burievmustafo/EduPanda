@@ -15,6 +15,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/components/ui/dialog'
+import useTranslate from '@/hooks/use-translate'
 import { AlarmClock, Loader2 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -31,15 +32,12 @@ interface Props {
 	lessonTitle: string
 }
 
-// Matnni mavjud tilda o'qiydi (en yoki ja).
 const pick = (v?: { en?: string; ja?: string }) => v?.en || v?.ja || ''
 
-// ITimedQuestion -> QuestionForm defaultValues
 const toDefaults = (tq: ITimedQuestion): Partial<IQuestionFormValues> => {
 	const correct = (OPTION_IDS.includes(tq.correctOptionId)
 		? tq.correctOptionId
 		: 'a') as 'a' | 'b' | 'c' | 'd'
-	// Qaysi tilda saqlangani: ja bo'lsa ja, aks holda en.
 	const language: 'en' | 'ja' = tq.question?.ja ? 'ja' : 'en'
 	return {
 		language,
@@ -59,6 +57,7 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 	const [loading, setLoading] = useState(false)
 	const [existing, setExisting] = useState<ITimedQuestion | null>(null)
 	const path = usePathname()
+	const t = useTranslate()
 
 	const onOpenChange = async (next: boolean) => {
 		setOpen(next)
@@ -68,7 +67,7 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 				const tq = await getTimedQuestion(lessonId)
 				setExisting(tq)
 			} catch {
-				toast.error('Failed to load question')
+				toast.error(t('error'))
 			} finally {
 				setLoading(false)
 			}
@@ -85,16 +84,16 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 	}
 
 	const onDelete = () => {
-		const isConfirmed = confirm('Delete the in-video question for this lesson?')
+		const isConfirmed = confirm(t('deleteQuestion') + '?')
 		if (!isConfirmed) return
 		const promise = deleteTimedQuestion(lessonId, path).then(() => {
 			setExisting(null)
 			setOpen(false)
 		})
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Deleted!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyDeleted'),
+			error: t('error'),
 		})
 	}
 
@@ -103,15 +102,14 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 			<DialogTrigger asChild>
 				<AlarmClock
 					className='size-4 cursor-pointer transition hover:opacity-75'
-					aria-label='In-video question'
+					aria-label={t('inVideoQuestion')}
 				/>
 			</DialogTrigger>
 			<DialogContent className='max-h-[90vh] overflow-y-auto'>
 				<DialogHeader>
-					<DialogTitle>In-video question</DialogTitle>
+					<DialogTitle>{t('inVideoQuestion')}</DialogTitle>
 					<DialogDescription>
-						{lessonTitle} — the video pauses at the trigger time and shows this
-						single 4-option question (one per lesson).
+						{lessonTitle}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -125,7 +123,7 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 							key={existing?._id ?? 'new'}
 							withTime
 							defaultValues={existing ? toDefaults(existing) : undefined}
-							submitLabel={existing ? 'Update question' : 'Add question'}
+							submitLabel={existing ? t('updateQuestion') : t('addQuestion')}
 							onSubmit={onSave}
 						/>
 						{existing && (
@@ -134,7 +132,7 @@ function TimedQuestionDialog({ lessonId, lessonTitle }: Props) {
 								className='w-full'
 								onClick={onDelete}
 							>
-								Delete question
+								{t('deleteQuestion')}
 							</Button>
 						)}
 					</>

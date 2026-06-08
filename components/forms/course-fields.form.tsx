@@ -32,9 +32,22 @@ import { storage } from '@/lib/firebase'
 import { ImageDown } from 'lucide-react'
 import { Dialog, DialogContent } from '../ui/dialog'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { v4 as uuidv4 } from 'uuid'
+import useTranslate from '@/hooks/use-translate'
+
+const levelKeys: Record<string, string> = {
+	beginner: 'level2',
+	intermediate: 'level3',
+	advanced: 'level4',
+}
+
+const langKeys: Record<string, string> = {
+	english: 'langEnglish',
+	uzbek: 'langUzbek',
+	japanese: 'langJapanese',
+}
 
 function CourseFieldsForm() {
 	const [isLoading, setIsLoading] = useState(false)
@@ -43,7 +56,9 @@ function CourseFieldsForm() {
 	const [open, setOpen] = useState(false)
 
 	const router = useRouter()
+	const { lng } = useParams()
 	const { user } = useUser()
+	const t = useTranslate()
 
 	const form = useForm<z.infer<typeof courseSchema>>({
 		resolver: zodResolver(courseSchema),
@@ -56,7 +71,7 @@ function CourseFieldsForm() {
 		const file = files[0]
 		if (!file) return null
 		if (!file.type.startsWith('image/')) {
-			return toast.error('Please choose an image file')
+			return toast.error(t('error'))
 		}
 
 		const reader = new FileReader()
@@ -76,30 +91,30 @@ function CourseFieldsForm() {
 				})
 				.catch(error => {
 					console.error('Course image upload failed:', error)
-					toast.warning('Firebase upload failed. The local image preview will be used.')
+					toast.warning(t('error'))
 					return result
 				})
 				.finally(() => setIsImageUploading(false))
 
 			toast.promise(promise, {
-				loading: 'Uploading...',
-				success: 'Successfully uploaded!',
-				error: 'Something went wrong!',
+				loading: t('uploading'),
+				success: t('successfullyUploaded'),
+				error: t('error'),
 			})
 		}
 
 		reader.onerror = () => {
 			setIsImageUploading(false)
-			toast.error('Could not read this image. Please choose another file.')
+			toast.error(t('error'))
 		}
 	}
 
 	function onSubmit(values: z.infer<typeof courseSchema>) {
 		if (isImageUploading) {
-			return toast.error('Please wait until image upload finishes')
+			return toast.error(t('uploadingImage'))
 		}
 		if (!previewImage) {
-			return toast.error('Please upload a preview image')
+			return toast.error(t('error'))
 		}
 		setIsLoading(true)
 		const { oldPrice, currentPrice, categoryCustom, category, ...rest } = values
@@ -115,14 +130,14 @@ function CourseFieldsForm() {
 		)
 			.then(() => {
 				form.reset()
-				router.push('/en/instructor/my-courses')
+				router.push(`/${lng}/instructor/my-courses`)
 			})
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully created!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyCreated'),
+			error: t('error'),
 		})
 	}
 
@@ -136,7 +151,7 @@ function CourseFieldsForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Course title<span className='text-red-500'>*</span>
+									{t('courseTitle')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Input
@@ -157,13 +172,13 @@ function CourseFieldsForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Short description<span className='text-red-500'>*</span>
+									{t('shortDescription')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Textarea
 										{...field}
 										className='h-44 bg-secondary'
-										placeholder='Description'
+										placeholder={t('descriptionLabel')}
 										disabled={isLoading}
 									/>
 								</FormControl>
@@ -179,7 +194,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										What will students learn in your course?
+										{t('whatWillLearn')}
 										<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
@@ -199,7 +214,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										Requirements
+										{t('requirements')}
 										<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
@@ -222,7 +237,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										Level<span className='text-red-500'>*</span>
+										{t('level')}<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
 										<Select
@@ -231,12 +246,12 @@ function CourseFieldsForm() {
 											disabled={isLoading}
 										>
 											<SelectTrigger className='w-full bg-secondary'>
-												<SelectValue placeholder={'Select'} />
+												<SelectValue placeholder={t('filter')} />
 											</SelectTrigger>
 											<SelectContent>
 												{courseLevels.map(item => (
 													<SelectItem key={item} value={item}>
-														{item}
+														{t(levelKeys[item] ?? item)}
 													</SelectItem>
 												))}
 											</SelectContent>
@@ -258,7 +273,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										Language<span className='text-red-500'>*</span>
+										{t('language')}<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
 										<Select
@@ -267,12 +282,12 @@ function CourseFieldsForm() {
 											disabled={isLoading}
 										>
 											<SelectTrigger className='w-full bg-secondary'>
-												<SelectValue placeholder={'Select'} />
+												<SelectValue placeholder={t('filter')} />
 											</SelectTrigger>
 											<SelectContent>
 												{courseLanguage.map(item => (
 													<SelectItem key={item} value={item}>
-														{item}
+														{t(langKeys[item] ?? item)}
 													</SelectItem>
 												))}
 											</SelectContent>
@@ -288,7 +303,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										Old price<span className='text-red-500'>*</span>
+										{t('oldPriceLabel')}<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
@@ -308,7 +323,7 @@ function CourseFieldsForm() {
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>
-										Current Price<span className='text-red-500'>*</span>
+										{t('currentPriceLabel')}<span className='text-red-500'>*</span>
 									</FormLabel>
 									<FormControl>
 										<Input
@@ -325,7 +340,7 @@ function CourseFieldsForm() {
 
 						<FormItem>
 							<FormLabel>
-								Preview image<span className='text-red-500'>*</span>
+								{t('previewImage')}<span className='text-red-500'>*</span>
 							</FormLabel>
 							<Input
 								className='bg-secondary'
@@ -344,10 +359,10 @@ function CourseFieldsForm() {
 							onClick={() => form.reset()}
 							disabled={isLoading}
 						>
-							Clear
+							{t('clear')}
 						</Button>
 						<Button type='submit' disabled={isLoading || isImageUploading}>
-							{isImageUploading ? 'Uploading image...' : 'Submit'}
+							{isImageUploading ? t('uploadingImage') : t('submit')}
 						</Button>
 						{previewImage && (
 							<Button
@@ -355,7 +370,7 @@ function CourseFieldsForm() {
 								variant={'outline'}
 								onClick={() => setOpen(true)}
 							>
-								<span>Image</span>
+								<span>{t('previewImage')}</span>
 								<ImageDown className='ml-2 size-4' />
 							</Button>
 						)}
@@ -382,7 +397,7 @@ function CourseFieldsForm() {
 							setOpen(false)
 						}}
 					>
-						Remove
+						{t('remove')}
 					</Button>
 				</DialogContent>
 			</Dialog>

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { lessonSchema } from '@/lib/validation'
 import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -47,6 +48,7 @@ function Lessons({ section, lessons }: Props) {
 
 	const path = usePathname()
 	const { onToggle, state } = useToggleEdit()
+	const t = useTranslate()
 
 	const onAdd = async (lesson: ILessonFields) => {
 		setIsLoading(true)
@@ -89,9 +91,9 @@ function Lessons({ section, lessons }: Props) {
 		)
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully reordered!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyReordered'),
+			error: t('error'),
 		})
 	}
 
@@ -120,7 +122,7 @@ function Lessons({ section, lessons }: Props) {
 			<CardContent className='relative p-6'>
 				{isLoading && <FillLoading />}
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Manage chapters</span>
+					<span className='text-lg font-medium'>{t('manageChapters')}</span>
 					{!isEdit && (
 						<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 							{state ? <X /> : <BadgePlus />}
@@ -141,7 +143,7 @@ function Lessons({ section, lessons }: Props) {
 				) : (
 					<>
 						{!lessons.length ? (
-							<p className='text-muted-foreground'>No lessons</p>
+							<p className='text-muted-foreground'>{t('noLessons')}</p>
 						) : (
 							<DragDropContext onDragEnd={onDragEnd}>
 								<Droppable droppableId='lessons'>
@@ -177,6 +179,7 @@ interface FormProps {
 }
 function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 	const { content, hours, minutes, seconds, title, videoUrl, free } = lesson
+	const t = useTranslate()
 
 	const form = useForm<z.infer<typeof lessonSchema>>({
 		resolver: zodResolver(lessonSchema),
@@ -195,9 +198,9 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 		const promise = handler(values as ILessonFields).finally(() => form.reset())
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfully'),
+			error: t('error'),
 		})
 	}
 
@@ -211,7 +214,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 						<FormItem>
 							<FormControl>
 								<Input
-									placeholder='Title'
+									placeholder={t('titleLabel')}
 									className='bg-secondary'
 									{...field}
 								/>
@@ -227,7 +230,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 						<FormItem>
 							<FormControl>
 								<Textarea
-									placeholder='Video URL'
+									placeholder={t('videoUrl')}
 									className='bg-secondary'
 									{...field}
 								/>
@@ -262,7 +265,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 							<FormItem>
 								<FormControl>
 									<Input
-										placeholder='Hours'
+										placeholder={t('hoursLabel')}
 										className='bg-secondary'
 										type='number'
 										{...field}
@@ -279,7 +282,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 							<FormItem>
 								<FormControl>
 									<Input
-										placeholder='Minutes'
+										placeholder={t('minutesLabel')}
 										className='bg-secondary'
 										type='number'
 										{...field}
@@ -296,7 +299,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 							<FormItem>
 								<FormControl>
 									<Input
-										placeholder='Seconds'
+										placeholder={t('secondsLabel')}
 										className='bg-secondary'
 										type='number'
 										{...field}
@@ -319,7 +322,7 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 										checked={field.value}
 									/>
 									<label className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
-										Are you offering this lesson for free?
+										{t('freeLessonLabel')}
 									</label>
 								</div>
 							</FormControl>
@@ -329,10 +332,10 @@ function Forms({ handler, lesson, isEdit = false, onCancel }: FormProps) {
 				/>
 
 				<div className='flex items-center gap-2'>
-					<Button type='submit'>{isEdit ? 'Edit' : 'Add'}</Button>
+					<Button type='submit'>{isEdit ? t('editLabel') : t('add')}</Button>
 					{isEdit && (
 						<Button variant='destructive' type='button' onClick={onCancel}>
-							Cancel
+							{t('cancel')}
 						</Button>
 					)}
 				</div>

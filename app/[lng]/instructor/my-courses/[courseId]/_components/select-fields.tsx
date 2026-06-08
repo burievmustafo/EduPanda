@@ -29,6 +29,7 @@ import {
 } from '@/constants'
 import { CourseCategoryField } from '@/components/forms/course-category-field'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { selectFieldsSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -40,12 +41,13 @@ import { z } from 'zod'
 
 function SelectFields(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Select fields</span>
+					<span className='text-lg font-medium'>{t('selectFieldsLabel')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -58,19 +60,19 @@ function SelectFields(course: ICourse) {
 					<div className='flex flex-col space-y-2'>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Language:
+								{t('language')}:
 							</span>
 							<span className='font-medium'>{course.language}</span>
 						</div>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Category:
+								{t('category')}:
 							</span>
 							<span className='font-medium'>{course.category}</span>
 						</div>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Level:
+								{t('level')}:
 							</span>
 							<span className='font-medium'>{course.level}</span>
 						</div>
@@ -89,7 +91,7 @@ interface FormsProps {
 }
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
-
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const categoryDefaults = getCategoryFormValues(course.category)
@@ -119,9 +121,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 
@@ -136,7 +138,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Language<span className='text-red-500'>*</span>
+									{t('language')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Select
@@ -172,7 +174,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Level<span className='text-red-500'>*</span>
+									{t('level')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Select
@@ -197,7 +199,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

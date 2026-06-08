@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { storage } from '@/lib/firebase'
 import { getDownloadURL, ref, uploadString } from 'firebase/storage'
 import { Edit2, X } from 'lucide-react'
@@ -19,12 +20,13 @@ import { v4 as uuidv4 } from 'uuid'
 
 function PreviewImage(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Replace image</span>
+					<span className='text-lg font-medium'>{t('replaceImage')}</span>
 					<div className=''>
 						<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 							{state ? <X /> : <Edit2 className='size-5' />}
@@ -58,6 +60,7 @@ interface FormsProps {
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
 	const pathname = usePathname()
+	const t = useTranslate()
 
 	function onUpload(e: ChangeEvent<HTMLInputElement>) {
 		setIsLoading(true)
@@ -82,9 +85,9 @@ function Forms({ course, onToggle }: FormsProps) {
 					.finally(() => setIsLoading(false))
 
 				toast.promise(promise, {
-					loading: 'Loading...',
-					success: 'Successfully updated!',
-					error: 'Something went wrong!',
+					loading: t('loading'),
+					success: t('successfullyUpdated'),
+					error: t('error'),
 				})
 			}
 		}

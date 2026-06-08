@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { priceSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Edit2, X } from 'lucide-react'
@@ -35,12 +36,13 @@ function formatUsd(price?: number | null) {
 
 function Price(course: ICourse) {
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 
 	return (
 		<Card>
 			<CardContent className='relative p-6'>
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Change price</span>
+					<span className='text-lg font-medium'>{t('changePriceLabel')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <Edit2 />}
 					</Button>
@@ -53,7 +55,7 @@ function Price(course: ICourse) {
 					<div className='flex flex-col space-y-2'>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Old price:
+								{t('oldPriceLabel')}:
 							</span>
 							<span className='font-medium'>
 								{formatUsd(course.oldPrice) ?? '—'}
@@ -61,10 +63,10 @@ function Price(course: ICourse) {
 						</div>
 						<div className='flex items-center gap-2'>
 							<span className='font-space-grotesk font-bold text-muted-foreground'>
-								Current price:
+								{t('currentPriceLabel')}:
 							</span>
 							<span className='font-medium'>
-								{formatUsd(course.currentPrice) ?? 'Free'}
+								{formatUsd(course.currentPrice) ?? t('freeLabel')}
 							</span>
 						</div>
 					</div>
@@ -82,6 +84,7 @@ interface FormsProps {
 }
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const form = useForm<z.infer<typeof priceSchema>>({
@@ -104,9 +107,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully updated!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyUpdated'),
+			error: t('error'),
 		})
 	}
 	return (
@@ -120,7 +123,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Old price<span className='text-red-500'>*</span>
+									{t('oldPriceLabel')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Input
@@ -140,7 +143,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Current price<span className='text-red-500'>*</span>
+									{t('currentPriceLabel')}<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
 									<Input
@@ -155,7 +158,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>

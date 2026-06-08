@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import useToggleEdit from '@/hooks/use-toggle-edit'
+import useTranslate from '@/hooks/use-translate'
 import { sectionSchema } from '@/lib/validation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { BadgePlus, X } from 'lucide-react'
@@ -35,6 +36,7 @@ interface Props {
 function Sections({ course, sections }: Props) {
 	const [isLoading, setIsLoading] = useState(false)
 	const { state, onToggle } = useToggleEdit()
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const onReorder = (updateData: { _id: string; position: number }[]) => {
@@ -45,9 +47,9 @@ function Sections({ course, sections }: Props) {
 		}).finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully reordered!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyReordered'),
+			error: t('error'),
 		})
 	}
 
@@ -76,7 +78,7 @@ function Sections({ course, sections }: Props) {
 			<CardContent className='relative p-6'>
 				{isLoading && <FillLoading />}
 				<div className='flex items-center justify-between'>
-					<span className='text-lg font-medium'>Sections</span>
+					<span className='text-lg font-medium'>{t('courseSections')}</span>
 					<Button size={'icon'} variant={'ghost'} onClick={onToggle}>
 						{state ? <X /> : <BadgePlus />}
 					</Button>
@@ -88,7 +90,7 @@ function Sections({ course, sections }: Props) {
 				) : (
 					<>
 						{!sections.length ? (
-							<p className='text-muted-foreground'>No sections</p>
+							<p className='text-muted-foreground'>{t('noSections')}</p>
 						) : (
 							<DragDropContext onDragEnd={onDragEnd}>
 								<Droppable droppableId='sections'>
@@ -121,7 +123,7 @@ interface FormsProps {
 }
 function Forms({ course, onToggle }: FormsProps) {
 	const [isLoading, setIsLoading] = useState(false)
-
+	const t = useTranslate()
 	const pathname = usePathname()
 
 	const form = useForm<z.infer<typeof sectionSchema>>({
@@ -136,9 +138,9 @@ function Forms({ course, onToggle }: FormsProps) {
 			.finally(() => setIsLoading(false))
 
 		toast.promise(promise, {
-			loading: 'Loading...',
-			success: 'Successfully created!',
-			error: 'Something went wrong!',
+			loading: t('loading'),
+			success: t('successfullyCreated'),
+			error: t('error'),
 		})
 	}
 
@@ -153,7 +155,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>
-									Section title
+									{t('sectionTitleLabel')}
 									<span className='text-red-500'>*</span>
 								</FormLabel>
 								<FormControl>
@@ -161,7 +163,7 @@ function Forms({ course, onToggle }: FormsProps) {
 										{...field}
 										className='bg-secondary'
 										disabled={isLoading}
-										placeholder='e.g. Introduction to the course'
+										placeholder={t('sectionPlaceholder')}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -169,7 +171,7 @@ function Forms({ course, onToggle }: FormsProps) {
 						)}
 					/>
 					<Button type='submit' disabled={isLoading}>
-						Save
+						{t('save')}
 					</Button>
 				</form>
 			</Form>
