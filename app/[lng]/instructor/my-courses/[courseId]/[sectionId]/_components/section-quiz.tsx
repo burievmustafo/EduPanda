@@ -19,6 +19,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import QuestionForm, { INormalizedQuestion } from './question-form'
+import QuizImportDialog, { type LessonCtx } from './quiz-import-dialog'
 
 const MAX_QUESTIONS = 10
 
@@ -26,11 +27,25 @@ const pick = (v?: { en?: string; ja?: string }) => v?.en || v?.ja || ''
 
 interface Props {
 	sectionId: string
+	sectionTitle: string
+	courseTitle?: string
+	courseLevel?: string
+	courseLanguage?: string
+	lessons?: LessonCtx[]
 	quiz: ISectionQuiz | null
 	questions: IQuizQuestion[]
 }
 
-function SectionQuiz({ sectionId, quiz, questions }: Props) {
+function SectionQuiz({
+	sectionId,
+	sectionTitle,
+	courseTitle,
+	courseLevel,
+	courseLanguage,
+	lessons,
+	quiz,
+	questions,
+}: Props) {
 	const [isLoading, setIsLoading] = useState(false)
 	const [passScore, setPassScore] = useState(`${quiz?.passScore ?? 70}`)
 	const { state, onToggle } = useToggleEdit()
@@ -112,7 +127,18 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 				{!quiz ? (
 					<div className='flex flex-col items-start gap-3'>
 						<p className='text-sm text-muted-foreground'>{t('noQuizDesc')}</p>
-						<Button onClick={onCreate}>{t('createSectionQuiz')}</Button>
+						<div className='flex flex-wrap gap-2'>
+							<Button onClick={onCreate}>{t('createSectionQuiz')}</Button>
+							<QuizImportDialog
+								sectionId={sectionId}
+								sectionTitle={sectionTitle}
+								courseTitle={courseTitle}
+								courseLevel={courseLevel}
+								courseLanguage={courseLanguage}
+								lessons={lessons}
+								existingCount={0}
+							/>
+						</div>
 					</div>
 				) : (
 					<div className='space-y-4'>
@@ -133,6 +159,15 @@ function SectionQuiz({ sectionId, quiz, questions }: Props) {
 							<Button variant={'outline'} size={'sm'} onClick={onSavePassScore}>
 								{t('save')}
 							</Button>
+							<QuizImportDialog
+								sectionId={sectionId}
+								sectionTitle={sectionTitle}
+								courseTitle={courseTitle}
+								courseLevel={courseLevel}
+								courseLanguage={courseLanguage}
+								lessons={lessons}
+								existingCount={questions.length}
+							/>
 							<span className='ml-auto text-sm text-muted-foreground'>
 								{t('quizzes')}: {questions.length} / {MAX_QUESTIONS}
 							</span>

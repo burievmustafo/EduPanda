@@ -9,6 +9,7 @@ import SectionField from './_components/section-field'
 import Lessons from './_components/lessons'
 import { getLessons } from '@/actions/lesson.action'
 import { getSectionQuiz } from '@/actions/quiz.action'
+import { getCourseById } from '@/actions/course.action'
 import SectionQuiz from './_components/section-quiz'
 import { translation } from '@/i18n/server'
 
@@ -20,9 +21,24 @@ async function Page({ params }: Params) {
 	const sectionJSON = await getSectionById(params.sectionId)
 	const lessonsJSON = await getLessons(params.sectionId)
 	const quizData = await getSectionQuiz(params.sectionId)
+	const courseJSON = await getCourseById(params.courseId)
 
 	const section = JSON.parse(JSON.stringify(sectionJSON))
 	const lessons = JSON.parse(JSON.stringify(lessonsJSON))
+	const course = JSON.parse(JSON.stringify(courseJSON))
+
+	// AI prompt uchun dars konteksti: nom + HTML'siz qisqa parcha
+	const lessonsContext = (lessons as any[]).map(l => ({
+		title: l.title,
+		excerpt:
+			typeof l.content === 'string'
+				? l.content
+						.replace(/<[^>]+>/g, ' ')
+						.replace(/\s+/g, ' ')
+						.trim()
+						.slice(0, 160)
+				: undefined,
+	}))
 
 	return (
 		<>
@@ -72,6 +88,11 @@ async function Page({ params }: Params) {
 				</div>
 				<SectionQuiz
 					sectionId={params.sectionId}
+					sectionTitle={section.title}
+					courseTitle={course?.title}
+					courseLevel={course?.level}
+					courseLanguage={course?.language}
+					lessons={lessonsContext}
 					quiz={quizData.quiz}
 					questions={quizData.questions}
 				/>

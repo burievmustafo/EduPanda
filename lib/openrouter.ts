@@ -4,12 +4,11 @@ import { NextResponse } from 'next/server'
 // Kalit: .env -> OPENROUTER_API_KEY. Model: OPENROUTER_MODEL (ixtiyoriy).
 const BASE = 'https://openrouter.ai/api/v1/chat/completions'
 
-// Bepul modellar — biri rate-limit (429) bo'lsa keyingisiga o'tadi.
+// Bepul modellar — biri rate-limit (429) yoki yo'q (404) bo'lsa keyingisiga o'tadi.
 const FREE_MODELS = [
-	'google/gemma-4-31b-it:free',
 	'meta-llama/llama-3.3-70b-instruct:free',
 	'qwen/qwen3-next-80b-a3b-instruct:free',
-	'google/gemma-4-26b-a4b-it:free',
+	'google/gemma-2-9b-it:free',
 ]
 
 export class AIError extends Error {

@@ -11,6 +11,7 @@ import UserProgress from '@/database/user-progress.model'
 import User from '@/database/user.model'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
+import { sanitizeQuestions, type ParsedQuestion } from '@/lib/quiz-import'
 
 // Variant id'lari (a/b/c/d). correctOptionId shulardan biriga teng bo'ladi.
 const OPTION_IDS = ['a', 'b', 'c', 'd']
@@ -130,6 +131,62 @@ export const deleteQuizQuestion = async (questionId: string, path: string) => {
 		await QuizQuestion.findByIdAndDelete(questionId)
 		revalidatePath(path)
 	} catch (error) {
+		throw new Error('Something went wrong!')
+	}
+}
+
+// Tashqi AI (ChatGPT) bergan jadvaldan ko'p savolni birdaniga import qiladi.
+// Quiz yo'q bo'lsa yaratadi. 10 ta limitni hurmat qiladi, ortiqchasini tashlaydi.
+export const importSectionQuizQuestions = async (params: {
+	sectionId: string
+	questions: ParsedQuestion[]
+	language?: 'en' | 'ja'
+	path: string
+}) => {
+	const { sectionId, questions, language = 'en', path } = params
+	try {
+		await connectToDatabase()
+
+		// Serverda qayta tekshirish — mijozga ishonmaymiz.
+		const clean = sanitizeQuestions(questions)
+		if (clean.length === 0) throw new Error('NO_VALID')
+
+		let quiz = await SectionQuiz.findOne({ section: sectionId })
+		if (!quiz) {
+			quiz = await SectionQuiz.create({
+				section: sectionId,
+				title: { en: 'Final Quiz' },
+				passScore: 70,
+				isPublished: true,
+			})
+		}
+
+		const existing = await QuizQuestion.countDocuments({ quiz: quiz._id })
+		const room = MAX_QUIZ_QUESTIONS - existing
+		if (room <= 0) throw new Error('QUIZ_FULL')
+
+		const toAdd = clean.slice(0, room)
+		let order = existing
+		const docs = toAdd.map(q => ({
+			quiz: quiz._id,
+			question: buildText(q.question, language),
+			options: buildOptions(q.options, language),
+			correctOptionId: OPTION_IDS[q.correctIndex],
+			explanation: q.explanation ? buildText(q.explanation, language) : undefined,
+			order: ++order,
+		}))
+
+		await QuizQuestion.insertMany(docs)
+		revalidatePath(path)
+
+		return { added: toAdd.length, skipped: clean.length - toAdd.length }
+	} catch (error) {
+		if (error instanceof Error && error.message === 'QUIZ_FULL') {
+			throw new Error(`Maximum ${MAX_QUIZ_QUESTIONS} questions allowed`)
+		}
+		if (error instanceof Error && error.message === 'NO_VALID') {
+			throw new Error('No valid questions to import')
+		}
 		throw new Error('Something went wrong!')
 	}
 }
