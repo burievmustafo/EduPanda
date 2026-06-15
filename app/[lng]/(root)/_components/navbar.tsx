@@ -26,6 +26,7 @@ function Navbar() {
 	const { cartsLength } = useCart()
 	const { isLoaded, isSignedIn } = useAuth()
 	const previousSignedIn = useRef<boolean | null>(null)
+	const authReturnUrl = pathname || `/${lng}`
 
 	useEffect(() => {
 		if (!isLoaded) return
@@ -89,12 +90,20 @@ function Navbar() {
 						<UserBox />
 					) : isLoaded ? (
 						<>
-							<SignInButton mode='modal'>
+							<SignInButton
+								mode='modal'
+								afterSignInUrl={authReturnUrl}
+								afterSignUpUrl={authReturnUrl}
+							>
 								<Button size={'lg'} rounded={'full'} className='hidden md:flex'>
 									{t('logIn')}
 								</Button>
 							</SignInButton>
-							<SignInButton mode='modal'>
+							<SignInButton
+								mode='modal'
+								afterSignInUrl={authReturnUrl}
+								afterSignUpUrl={authReturnUrl}
+							>
 								<Button size={'icon'} variant={'ghost'} className='md:hidden'>
 									<LogIn />
 								</Button>
