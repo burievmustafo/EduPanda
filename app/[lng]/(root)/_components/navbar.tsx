@@ -8,11 +8,11 @@ import { LogIn, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import GlobalSearch from './global-search'
 import LanguageDropdown from '@/components/shared/language-dropdown'
-import { SignInButton, useAuth } from '@clerk/nextjs'
+import { SignInButton, useAuth, useClerk } from '@clerk/nextjs'
 import UserBox from '@/components/shared/user-box'
 import useTranslate from '@/hooks/use-translate'
 import Mobile from './mobile'
-import { useParams, usePathname, useRouter } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/use-cart'
 import Notification from '@/components/shared/notification'
@@ -21,22 +21,25 @@ import { useEffect, useRef } from 'react'
 function Navbar() {
 	const t = useTranslate()
 	const pathname = usePathname()
-	const router = useRouter()
 	const { lng } = useParams()
 	const { cartsLength } = useCart()
 	const { isLoaded, isSignedIn } = useAuth()
-	const previousSignedIn = useRef<boolean | null>(null)
+	const clerk = useClerk()
 	const authReturnUrl = pathname || `/${lng}`
+	const isInitialSession = useRef(true)
 
 	useEffect(() => {
-		if (!isLoaded) return
-
-		if (previousSignedIn.current === false && isSignedIn) {
-			router.refresh()
-		}
-
-		previousSignedIn.current = Boolean(isSignedIn)
-	}, [isLoaded, isSignedIn, router])
+		const unsubscribe = clerk.addListener(({ session }) => {
+			if (isInitialSession.current) {
+				isInitialSession.current = false
+				return
+			}
+			if (session) {
+				window.location.reload()
+			}
+		})
+		return unsubscribe
+	}, [clerk])
 
 	return (
 		<div className='fixed inset-0 z-40 h-20 bg-background/70 backdrop-blur-xl'>
@@ -92,6 +95,7 @@ function Navbar() {
 						<>
 							<SignInButton
 								mode='modal'
+								redirectUrl={authReturnUrl}
 								afterSignInUrl={authReturnUrl}
 								afterSignUpUrl={authReturnUrl}
 							>
@@ -101,6 +105,7 @@ function Navbar() {
 							</SignInButton>
 							<SignInButton
 								mode='modal'
+								redirectUrl={authReturnUrl}
 								afterSignInUrl={authReturnUrl}
 								afterSignUpUrl={authReturnUrl}
 							>
