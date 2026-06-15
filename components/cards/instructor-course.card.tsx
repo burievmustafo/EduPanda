@@ -26,11 +26,14 @@ function InstructorCourseCard({ course }: Props) {
 						className='rounded-md object-cover'
 					/>
 				</div>
-				<div className='flex items-center justify-between px-2'>
-					<h1 className='font-space-grotesk text-2xl font-bold'>
+				<div className='flex items-center justify-between gap-3 px-2'>
+					<h1 className='min-w-0 font-space-grotesk text-2xl font-bold'>
 						{course.title}
 					</h1>
-					<Badge variant={course.published ? 'default' : 'destructive'}>
+					<Badge
+						variant={course.published ? 'default' : 'destructive'}
+						className='shrink-0 whitespace-nowrap'
+					>
 						{course.published ? t('published') : t('draft')}
 					</Badge>
 				</div>
