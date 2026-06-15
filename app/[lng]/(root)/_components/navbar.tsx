@@ -8,20 +8,34 @@ import { LogIn, ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 import GlobalSearch from './global-search'
 import LanguageDropdown from '@/components/shared/language-dropdown'
-import { SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
+import { SignInButton, useAuth } from '@clerk/nextjs'
 import UserBox from '@/components/shared/user-box'
 import useTranslate from '@/hooks/use-translate'
 import Mobile from './mobile'
-import { useParams, usePathname } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useCart } from '@/hooks/use-cart'
 import Notification from '@/components/shared/notification'
+import { useEffect, useRef } from 'react'
 
 function Navbar() {
 	const t = useTranslate()
 	const pathname = usePathname()
+	const router = useRouter()
 	const { lng } = useParams()
 	const { cartsLength } = useCart()
+	const { isLoaded, isSignedIn } = useAuth()
+	const previousSignedIn = useRef<boolean | null>(null)
+
+	useEffect(() => {
+		if (!isLoaded) return
+
+		if (previousSignedIn.current === false && isSignedIn) {
+			router.refresh()
+		}
+
+		previousSignedIn.current = Boolean(isSignedIn)
+	}, [isLoaded, isSignedIn, router])
 
 	return (
 		<div className='fixed inset-0 z-40 h-20 bg-background/70 backdrop-blur-xl'>
@@ -71,21 +85,22 @@ function Navbar() {
 						<Mobile />
 						<ModeToggle />
 					</div>
-					<SignedIn>
+					{isLoaded && isSignedIn ? (
 						<UserBox />
-					</SignedIn>
-					<SignedOut>
-						<SignInButton mode='modal'>
-							<Button size={'lg'} rounded={'full'} className='hidden md:flex'>
-								{t('logIn')}
-							</Button>
-						</SignInButton>
-						<SignInButton mode='modal'>
-							<Button size={'icon'} variant={'ghost'} className='md:hidden'>
-								<LogIn />
-							</Button>
-						</SignInButton>
-					</SignedOut>
+					) : isLoaded ? (
+						<>
+							<SignInButton mode='modal'>
+								<Button size={'lg'} rounded={'full'} className='hidden md:flex'>
+									{t('logIn')}
+								</Button>
+							</SignInButton>
+							<SignInButton mode='modal'>
+								<Button size={'icon'} variant={'ghost'} className='md:hidden'>
+									<LogIn />
+								</Button>
+							</SignInButton>
+						</>
+					) : null}
 				</div>
 			</div>
 		</div>
