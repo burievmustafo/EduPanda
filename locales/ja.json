@@ -406,4 +406,16 @@
 	"aiCreated": "コースの下書きを作成しました！",
 	"aiBusy": "AIが混雑しています（無料枠の制限）。1分ほど待って再試行してください。",
 	"aiFailed": "AIがコースを生成できませんでした。もう一度お試しください。"
+	,"importCourse": "インポート",
+	"importCourseTitle": "コースをインポート",
+	"importCourseDesc": "EduPandaからエクスポートしたコースファイルをアップロードします。コースは講師アカウントに未公開の下書きとして追加されます。",
+	"coursePackage": "コースパッケージ",
+	"uploadCoursePackageJson": "EduPandaのコースJSONファイルをアップロードしてください。",
+	"coursePackageLoaded": "コースパッケージを読み込みました。",
+	"invalidCoursePackage": "コースパッケージが無効です。ファイルを確認してもう一度お試しください。",
+	"courseImportedDraft": "コースを下書きとしてインポートしました。",
+	"noDescription": "説明なし",
+	"importAsDraft": "下書きとしてインポート",
+	"exportCourse": "エクスポート",
+	"courseExported": "コースをエクスポートしました。"
 }

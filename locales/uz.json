@@ -230,5 +230,17 @@
 	"imageDescription": "Menga istalgan narsani so'ragan holda rasm yarating. Men sizga yordam bera harakat qilib ko'raman. Muhokama maxfiy va xavfsiz. Men hech qanday ma'lumotni saqlamayman. Sizga yordam berish uchun men bu erda.",
 	"imagePlaceholder": "Rasm yaratish uchun nima so'ray olishim kerak.",
 	"photo": "Rasmi",
-	"photos": "Rasmlar"
+	"photos": "Rasmlar",
+	"importCourse": "Import",
+	"importCourseTitle": "Kursni import qilish",
+	"importCourseDesc": "EduPanda'dan export qilingan kurs faylini yuklang. Kurs sizning o'qituvchi hisobingizga nashr qilinmagan draft sifatida qo'shiladi.",
+	"coursePackage": "Kurs paketi",
+	"uploadCoursePackageJson": "Iltimos, EduPanda kurs JSON faylini yuklang.",
+	"coursePackageLoaded": "Kurs paketi yuklandi.",
+	"invalidCoursePackage": "Kurs paketi noto'g'ri. Faylni tekshirib, qayta urinib ko'ring.",
+	"courseImportedDraft": "Kurs draft sifatida import qilindi.",
+	"noDescription": "Tavsif yo'q",
+	"importAsDraft": "Draft sifatida import qilish",
+	"exportCourse": "Export",
+	"courseExported": "Kurs export qilindi."
 }

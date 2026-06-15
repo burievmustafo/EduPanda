@@ -231,4 +231,16 @@
 	"imagePlaceholder": "Bir resim oluşturmak için bana ne sorabilirim?",
 	"photo": "Fotoğraf",
 	"photos": "Fotoğraflar"
+	,"importCourse": "Içe aktar",
+	"importCourseTitle": "Kursu içe aktar",
+	"importCourseDesc": "EduPanda'dan dışa aktarılan kurs dosyasını yükleyin. Kurs, eğitmen hesabınıza yayınlanmamış taslak olarak eklenecektir.",
+	"coursePackage": "Kurs paketi",
+	"uploadCoursePackageJson": "Lütfen bir EduPanda kurs JSON dosyası yükleyin.",
+	"coursePackageLoaded": "Kurs paketi yüklendi.",
+	"invalidCoursePackage": "Geçersiz kurs paketi. Lütfen dosyayı kontrol edip tekrar deneyin.",
+	"courseImportedDraft": "Kurs taslak olarak içe aktarıldı.",
+	"noDescription": "Açıklama yok",
+	"importAsDraft": "Taslak olarak içe aktar",
+	"exportCourse": "Dışa aktar",
+	"courseExported": "Kurs dışa aktarıldı."
 }

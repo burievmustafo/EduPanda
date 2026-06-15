@@ -4,11 +4,12 @@ import CourseFieldsForm from '@/components/forms/course-fields.form'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import useTranslate from '@/hooks/use-translate'
-import { Sparkles } from 'lucide-react'
+import { FileJson, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import AiCourseBuilder from './ai-course-builder'
+import ImportCourseBuilder from './import-course-builder'
 
-type Mode = 'manual' | 'ai'
+type Mode = 'manual' | 'ai' | 'import'
 
 function CreateCourseSwitcher() {
 	const t = useTranslate()
@@ -32,14 +33,32 @@ function CreateCourseSwitcher() {
 					<Sparkles className='mr-2 size-4' />
 					{t('aiBuilder')}
 				</Button>
+				<Button
+					variant={mode === 'import' ? 'default' : 'outline'}
+					size='sm'
+					onClick={() => setMode('import')}
+				>
+					<FileJson className='mr-2 size-4' />
+					{t('importCourse')}
+				</Button>
 			</div>
 
 			<h3 className='font-space-grotesk text-lg font-medium'>
-				{mode === 'manual' ? t('basicInformation') : t('aiBuilderTitle')}
+				{mode === 'manual'
+					? t('basicInformation')
+					: mode === 'ai'
+						? t('aiBuilderTitle')
+						: t('importCourseTitle')}
 			</h3>
 			<Separator className='my-3' />
 
-			{mode === 'manual' ? <CourseFieldsForm /> : <AiCourseBuilder />}
+			{mode === 'manual' ? (
+				<CourseFieldsForm />
+			) : mode === 'ai' ? (
+				<AiCourseBuilder />
+			) : (
+				<ImportCourseBuilder />
+			)}
 		</>
 	)
 }

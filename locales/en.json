@@ -405,5 +405,17 @@
 	"startOver": "Start over",
 	"aiCreated": "Course draft created!",
 	"aiBusy": "AI is busy right now (free-tier limit). Please try again in a minute.",
-	"aiFailed": "AI could not generate the course. Please try again."
+	"aiFailed": "AI could not generate the course. Please try again.",
+	"importCourse": "Import",
+	"importCourseTitle": "Import course",
+	"importCourseDesc": "Upload a course exported from EduPanda. It will be imported as an unpublished draft under your instructor account.",
+	"coursePackage": "Course package",
+	"uploadCoursePackageJson": "Please upload an EduPanda course JSON file.",
+	"coursePackageLoaded": "Course package loaded.",
+	"invalidCoursePackage": "Invalid course package. Please check the file and try again.",
+	"courseImportedDraft": "Course imported as draft.",
+	"noDescription": "No description",
+	"importAsDraft": "Import as draft",
+	"exportCourse": "Export",
+	"courseExported": "Course exported."
 }

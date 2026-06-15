@@ -231,4 +231,16 @@
 	"imagePlaceholder": "Что мне спросить, чтобы сгенерировать изображение?",
 	"photo": "Фото",
 	"photos": "Фотографии"
+	,"importCourse": "Импорт",
+	"importCourseTitle": "Импорт курса",
+	"importCourseDesc": "Загрузите курс, экспортированный из EduPanda. Он будет добавлен в ваш аккаунт преподавателя как неопубликованный черновик.",
+	"coursePackage": "Пакет курса",
+	"uploadCoursePackageJson": "Пожалуйста, загрузите JSON-файл курса EduPanda.",
+	"coursePackageLoaded": "Пакет курса загружен.",
+	"invalidCoursePackage": "Недействительный пакет курса. Проверьте файл и попробуйте снова.",
+	"courseImportedDraft": "Курс импортирован как черновик.",
+	"noDescription": "Нет описания",
+	"importAsDraft": "Импортировать как черновик",
+	"exportCourse": "Экспорт",
+	"courseExported": "Курс экспортирован."
 }
