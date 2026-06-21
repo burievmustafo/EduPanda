@@ -13,6 +13,14 @@ export function li18n(i18n: L, plain?: string): { en: string; ja?: string } {
 	return ja ? { en, ja } : { en }
 }
 
+/** Web `CustomImage` — `/assets/hero.png` haqiqiy rasm emas. */
+function normalizePreviewImage(url?: string | null): string | undefined {
+	if (!url?.trim()) return undefined
+	const value = url.trim()
+	if (value === '/assets/hero.png' || value.endsWith('/assets/hero.png')) return undefined
+	return value
+}
+
 export function lessonDurationSec(lesson: any): number {
 	if (lesson?.durationSec && lesson.durationSec > 0) return lesson.durationSec
 	const d = lesson?.duration
@@ -22,7 +30,13 @@ export function lessonDurationSec(lesson: any): number {
 
 export function toCourseDTO(
 	course: any,
-	extra: { sectionsCount: number; lessonsCount: number; isEnrolled: boolean }
+	extra: {
+		sectionsCount: number
+		lessonsCount: number
+		isEnrolled: boolean
+		averageRating?: number
+		reviewCount?: number
+	}
 ) {
 	return {
 		id: String(course._id),
@@ -30,7 +44,7 @@ export function toCourseDTO(
 		description: li18n(course.descriptionI18n, course.description),
 		learning: li18n(course.learningI18n, course.learning),
 		requirements: li18n(course.requirementsI18n, course.requirements),
-		previewImage: course.previewImage || undefined,
+		previewImage: normalizePreviewImage(course.previewImage),
 		level: course.level || '',
 		category: course.category || '',
 		language: course.language || undefined,
@@ -45,6 +59,8 @@ export function toCourseDTO(
 		sectionsCount: extra.sectionsCount,
 		lessonsCount: extra.lessonsCount,
 		isEnrolled: extra.isEnrolled,
+		averageRating: extra.averageRating ?? 0,
+		reviewCount: extra.reviewCount ?? 0,
 	}
 }
 
@@ -119,13 +135,20 @@ export function toLessonDetailDTO(
 }
 
 /** correctOptionId YO'Q. */
-export function toQuizDTO(quiz: any, questions: any[]) {
+export function toQuizDTO(
+	quiz: any,
+	questions: any[],
+	latestAttempt?: any,
+	attempts?: any[]
+) {
 	return {
 		id: String(quiz._id),
 		sectionId: String(quiz.section),
 		title: li18n(quiz.title),
 		passScore: quiz.passScore ?? 70,
 		timeLimitMin: quiz.timeLimitMin || undefined,
+		latestAttempt: latestAttempt || undefined,
+		attempts: attempts || undefined,
 		questions: questions
 			.sort((a, b) => (a.order || 0) - (b.order || 0))
 			.map((q) => ({

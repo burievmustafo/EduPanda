@@ -28,7 +28,6 @@ import {
 	buildCompletedRows,
 	buildInProgressRows,
 	buildSavedRows,
-	getDefaultSavedSeed,
 	type MyCoursesTab,
 } from '@/lib/my-courses-data'
 import { useSavedCourses } from '@/store/saved-courses-store'
@@ -46,17 +45,12 @@ export default function LearningTab() {
 	const savedIds = useSavedCourses((s) => s.ids)
 	const hydrated = useSavedCourses((s) => s.hydrated)
 	const hydrateSaved = useSavedCourses((s) => s.hydrate)
-	const seedIfEmpty = useSavedCourses((s) => s.seedIfEmpty)
 
 	useFocusEffect(
 		useCallback(() => {
 			void refetch()
-			void hydrateSaved().then(() => {
-				if (courses?.length) {
-					void seedIfEmpty(getDefaultSavedSeed(courses))
-				}
-			})
-		}, [refetch, hydrateSaved, seedIfEmpty, courses]),
+			void hydrateSaved()
+		}, [refetch, hydrateSaved]),
 	)
 
 	const inProgressRows = useMemo(

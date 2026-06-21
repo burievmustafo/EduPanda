@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 
+import { CoursePreviewImage } from '@/components/course/course-preview-image'
 import { AppText } from '@/components/ui/app-text'
 import { useFigmaTheme } from '@/design/figma-theme'
 import { spacing } from '@/design/tokens'
 import { categoryColor } from '@/lib/category-colors'
-import { getFigmaMockRating } from '@/lib/figma-mock-rating'
 
 type Props = {
 	title: string
@@ -14,6 +14,7 @@ type Props = {
 	thumbnailUri?: string
 	category?: string
 	courseId?: string
+	rating?: string
 	completedLabel: string
 	onPress: () => void
 }
@@ -25,12 +26,12 @@ export function ContinueWatchingCard({
 	thumbnailUri,
 	category,
 	courseId,
+	rating,
 	completedLabel,
 	onPress,
 }: Props) {
 	const theme = useFigmaTheme()
 	const clamped = Math.min(100, Math.max(0, Math.round(percent)))
-	const rating = getFigmaMockRating(courseId ?? title)
 	const thumbColor = categoryColor(category ?? 'General')
 
 	return (
@@ -47,16 +48,13 @@ export function ContinueWatchingCard({
 			]}
 			accessibilityRole="button">
 			<View style={styles.thumbWrap}>
-				{thumbnailUri ? (
-					<Image
-						source={{ uri: thumbnailUri }}
-						style={styles.thumbImage}
-						resizeMode="cover"
-						accessibilityIgnoresInvertColors
-					/>
-				) : (
-					<View style={[styles.thumbPlaceholder, { backgroundColor: thumbColor }]} />
-				)}
+				<CoursePreviewImage
+					uri={thumbnailUri}
+					style={styles.thumbImage}
+					containerStyle={styles.thumbPlaceholder}
+					iconSize={20}
+					labelSize={7}
+				/>
 			</View>
 
 			<View style={styles.body}>
@@ -69,12 +67,14 @@ export function ContinueWatchingCard({
 					</AppText>
 				) : null}
 
-				<View style={styles.ratingRow}>
-					<Ionicons name="star" size={10} color={theme.accent} />
-					<AppText variant="small" style={[styles.ratingText, { color: theme.textMuted }]}>
-						{rating}
-					</AppText>
-				</View>
+				{rating ? (
+					<View style={styles.ratingRow}>
+						<Ionicons name="star" size={10} color={theme.accent} />
+						<AppText variant="small" style={[styles.ratingText, { color: theme.textMuted }]}>
+							{rating}
+						</AppText>
+					</View>
+				) : null}
 
 				<View style={styles.progressRow}>
 					<View style={[styles.progressTrack, { backgroundColor: theme.progressTrack }]}>
@@ -119,7 +119,8 @@ const styles = StyleSheet.create({
 		width: 87,
 		height: 58,
 		borderRadius: 5,
-		opacity: 0.85,
+		alignItems: 'center' as const,
+		justifyContent: 'center' as const,
 	},
 	body: {
 		flex: 1,

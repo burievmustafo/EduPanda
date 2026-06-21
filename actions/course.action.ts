@@ -18,6 +18,7 @@ import { calculateTotalDuration } from '@/lib/utils'
 import { FilterQuery } from 'mongoose'
 import Purchase from '@/database/purchase.model'
 import UserProgress from '@/database/user-progress.model'
+import { countCompletedLessons, getLessonProgressMap } from '@/lib/learning-progress'
 import Review from '@/database/review.model'
 
 export const createCourse = async (data: ICreateCourse, clerkId: string) => {
@@ -311,15 +312,34 @@ export const getDashboardCourse = async (clerkId: string, courseId: string) => {
 
 		const lessons = sections.map(section => section.lessons).flat()
 		const lessonIds = lessons.map(lesson => lesson._id)
+		const user = await User.findOne({ clerkId }).select('_id').lean()
 
-		const validCompletedLessons = await UserProgress.find({
-			userId: clerkId,
-			lessonId: { $in: lessonIds },
-			isCompleted: true,
+		const completedLessons = await countCompletedLessons({
+			clerkId,
+			studentId: (user as any)?._id,
+			lessonIds,
+		})
+		const progressByLesson = await getLessonProgressMap({
+			clerkId,
+			studentId: (user as any)?._id,
+			lessonIds,
+		})
+		lessons.forEach((lesson: any) => {
+			const progress = progressByLesson.get(String(lesson._id))
+			if (progress?.isCompleted) {
+				const existing = lesson.userProgress || []
+				const hasCurrent = existing.some((p: any) => String(p.lessonId) === String(lesson._id))
+				if (!hasCurrent) {
+					lesson.userProgress = [
+						...existing,
+						{ userId: clerkId, lessonId: String(lesson._id), isCompleted: true },
+					]
+				}
+			}
 		})
 
 		const progressPercentage =
-			(validCompletedLessons.length / lessons.length) * 100
+			lessons.length > 0 ? (completedLessons / lessons.length) * 100 : 0
 
 		return { course, sections, progressPercentage }
 	} catch (error) {
@@ -420,15 +440,16 @@ export const getProgressCourse = async (clerkId: string, courseId: string) => {
 
 		const lessons = sections.map(section => section.lessons).flat()
 		const lessonIds = lessons.map(lesson => lesson._id)
+		const user = await User.findOne({ clerkId }).select('_id').lean()
 
-		const validCompletedLessons = await UserProgress.find({
-			userId: clerkId,
-			lessonId: { $in: lessonIds },
-			isCompleted: true,
+		const completedLessons = await countCompletedLessons({
+			clerkId,
+			studentId: (user as any)?._id,
+			lessonIds,
 		})
 
 		const progressPercentage =
-			(validCompletedLessons.length / lessons.length) * 100
+			lessons.length > 0 ? (completedLessons / lessons.length) * 100 : 0
 
 		return progressPercentage
 	} catch (error) {

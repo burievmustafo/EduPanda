@@ -25,6 +25,7 @@ export interface StudentQuiz {
 	title: string
 	passScore: number
 	questions: QuizQuestion[]
+	latestAttempt?: QuizResult | null
 }
 
 interface ReviewItem {
@@ -35,6 +36,7 @@ interface ReviewItem {
 	explanation?: string
 }
 interface QuizResult {
+	attemptId?: string
 	totalQuestions: number
 	correctAnswers: number
 	score: number
@@ -52,7 +54,7 @@ function QuizRunner({ quiz, courseId, lng }: Props) {
 	const { userId } = useAuth()
 	const [answers, setAnswers] = useState<Record<string, string>>({})
 	const [submitting, setSubmitting] = useState(false)
-	const [result, setResult] = useState<QuizResult | null>(null)
+	const [result, setResult] = useState<QuizResult | null>(quiz.latestAttempt ?? null)
 
 	const reviewByQuestion = useMemo(() => {
 		const map: Record<string, ReviewItem> = {}

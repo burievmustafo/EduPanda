@@ -22,29 +22,24 @@ import { AppText } from '@/components/ui/app-text'
 import { figmaAuth } from '@/constants/figma-auth-theme'
 import { spacing } from '@/design/tokens'
 import { clerkErrorMessage } from '@/lib/clerk-error'
-import { requestEmailOtp, verifyEmailOtp, type EmailOtpMode } from '@/lib/email-otp-auth'
 import { isValidEmail } from '@/lib/email'
 import { useSocialAuth, type SocialStrategy } from '@/lib/social-auth'
-import { useSignIn, useSignUp } from '@clerk/clerk-expo'
+import { useSignUp } from '@clerk/clerk-expo'
 
 export default function SignUpScreen() {
 	const { t } = useTranslation()
 	const insets = useSafeAreaInsets()
-	const { signIn, setActive: setSignInActive, isLoaded: signInLoaded } = useSignIn()
 	const { signUp, setActive: setSignUpActive, isLoaded: signUpLoaded } = useSignUp()
 	const socialAuth = useSocialAuth()
 
 	const [name, setName] = useState('')
 	const [email, setEmail] = useState('')
-	const [code, setCode] = useState('')
+	const [password, setPassword] = useState('')
 	const [loading, setLoading] = useState(false)
-	const [otpMode, setOtpMode] = useState<EmailOtpMode | null>(null)
 	const [socialLoading, setSocialLoading] = useState<SocialStrategy | null>(null)
 
-	const isLoaded = signInLoaded && signUpLoaded
-
 	const onSubmit = async () => {
-		if (!name.trim() || !email.trim()) {
+		if (!name.trim() || !email.trim() || !password) {
 			Alert.alert(t('auth.signUp'), t('auth.fillAllFields'))
 			return
 		}
@@ -52,41 +47,23 @@ export default function SignUpScreen() {
 			Alert.alert(t('auth.signUp'), t('auth.invalidEmail'))
 			return
 		}
-		if (!isLoaded || !signIn || !signUp) return
+		if (!signUpLoaded || !signUp) return
 
 		setLoading(true)
 		try {
-			const mode = await requestEmailOtp(email, signIn, signUp, name)
-			setOtpMode(mode)
-			setCode('')
-		} catch (err) {
-			if (err instanceof Error && err.message === 'GOOGLE_ONLY') {
-				Alert.alert(t('auth.signUp'), t('auth.useGoogleInstead'))
-				return
-			}
-			Alert.alert(t('auth.signUp'), clerkErrorMessage(err))
-		} finally {
-			setLoading(false)
-		}
-	}
+			const result = await signUp.create({
+				emailAddress: email.trim().toLowerCase(),
+				password,
+				firstName: name.trim(),
+			})
 
-	const onVerify = async () => {
-		if (!code.trim()) {
-			Alert.alert(t('auth.signUp'), t('auth.fillAllFields'))
-			return
-		}
-		if (!isLoaded || !signIn || !signUp || !otpMode) return
-
-		setLoading(true)
-		try {
-			const result = await verifyEmailOtp(otpMode, code, signIn, signUp)
-			if (result.status === 'complete' && result.sessionId) {
-				const activate = otpMode === 'signIn' ? setSignInActive : setSignUpActive
-				await activate({ session: result.sessionId })
+			if (result.status === 'complete' && result.createdSessionId) {
+				await setSignUpActive({ session: result.createdSessionId })
 				router.replace('/(tabs)/home')
 				return
 			}
-			Alert.alert(t('auth.signUp'), t('auth.invalidCode'))
+
+			Alert.alert(t('auth.signUp'), clerkErrorMessage(result))
 		} catch (err) {
 			Alert.alert(t('auth.signUp'), clerkErrorMessage(err))
 		} finally {
@@ -130,88 +107,74 @@ export default function SignUpScreen() {
 					keyboardShouldPersistTaps="handled"
 					showsVerticalScrollIndicator={false}>
 					<AppText variant="h2" style={styles.title}>
-						{otpMode ? t('auth.verifyTitle') : t('auth.signUpTitle')}
+						{t('auth.signUpTitle')}
 					</AppText>
 					<AppText variant="body" style={styles.subtitle}>
-						{otpMode
-							? t('auth.verifySubtitle', { email: email.trim() })
-							: t('auth.signUpSubtitleEmail')}
+						{t('auth.signUpSubtitleEmail')}
 					</AppText>
 
-					{otpMode ? (
-						<View style={styles.form}>
-							<AuthTextField
-								label={t('auth.codeLabel')}
-								value={code}
-								onChangeText={setCode}
-								keyboardType="number-pad"
-								autoComplete="one-time-code"
-								placeholder="123456"
-							/>
-							<FigmaPrimaryButton
-								title={t('auth.verifyCode')}
-								onPress={() => void onVerify()}
-								loading={loading}
-								style={styles.submit}
-							/>
-						</View>
-					) : (
-						<>
-							<View style={styles.form}>
-								<AuthTextField
-									label={t('auth.nameLabel')}
-									value={name}
-									onChangeText={setName}
-									autoComplete="name"
-									placeholder={t('auth.namePlaceholder')}
-								/>
-								<AuthTextField
-									label={t('auth.emailLabel')}
-									value={email}
-									onChangeText={setEmail}
-									keyboardType="email-address"
-									autoCapitalize="none"
-									autoComplete="email"
-									placeholder="youremail@gmail.com"
-								/>
+					<View style={styles.form}>
+						<AuthTextField
+							label={t('auth.nameLabel')}
+							value={name}
+							onChangeText={setName}
+							autoComplete="name"
+							placeholder={t('auth.namePlaceholder')}
+						/>
+						<AuthTextField
+							label={t('auth.emailLabel')}
+							value={email}
+							onChangeText={setEmail}
+							keyboardType="email-address"
+							autoCapitalize="none"
+							autoComplete="email"
+							placeholder="youremail@gmail.com"
+						/>
+						<AuthTextField
+							label={t('auth.passwordLabel')}
+							value={password}
+							onChangeText={setPassword}
+							secureTextEntry
+							autoCapitalize="none"
+							autoComplete="new-password"
+							placeholder="********"
+						/>
 
-								<FigmaPrimaryButton
-									title={t('auth.sendCode')}
-									onPress={() => void onSubmit()}
-									loading={loading}
-									style={styles.submit}
-								/>
-							</View>
+						<FigmaPrimaryButton
+							title={t('auth.signUp')}
+							onPress={() => void onSubmit()}
+							loading={loading}
+							style={styles.submit}
+						/>
+					</View>
 
-							<AuthDivider labelKey="auth.orSignUpWith" />
+					<AuthDivider labelKey="auth.orSignUpWith" />
 
-							<SocialAuthButton
-								variant="google"
-								title={t('auth.signUpGoogle')}
-								onPress={() => void onSocial('oauth_google', 'Google')}
-								loading={socialLoading === 'oauth_google'}
-								disabled={socialLoading !== null}
-							/>
-							<View style={styles.socialGap} />
-							<SocialAuthButton
-								variant="facebook"
-								title={t('auth.signUpFacebook')}
-								onPress={() => void onSocial('oauth_facebook', 'Facebook')}
-								loading={socialLoading === 'oauth_facebook'}
-								disabled={socialLoading !== null}
-							/>
+					<SocialAuthButton
+						variant="google"
+						title={t('auth.signUpGoogle')}
+						onPress={() => void onSocial('oauth_google', 'Google')}
+						loading={socialLoading === 'oauth_google'}
+						disabled={socialLoading !== null}
+					/>
+					<View style={styles.socialGap} />
+					<SocialAuthButton
+						variant="facebook"
+						title={t('auth.signUpFacebook')}
+						onPress={() => void onSocial('oauth_facebook', 'Facebook')}
+						loading={socialLoading === 'oauth_facebook'}
+						disabled={socialLoading !== null}
+					/>
 
-							<Pressable
-								onPress={() => router.push('/(auth)/sign-in')}
-								style={styles.footer}
-								accessibilityRole="link">
-								<Text style={styles.footerText}>
-									{t('auth.haveAccount')}{' '}
-									<Text style={styles.footerLink}>{t('auth.signInHere')}</Text>
-								</Text>
-							</Pressable>
-						</>
-					)}
+					<Pressable
+						onPress={() => router.push('/(auth)/sign-in')}
+						style={styles.footer}
+						accessibilityRole="link">
+						<Text style={styles.footerText}>
+							{t('auth.haveAccount')}{' '}
+							<Text style={styles.footerLink}>{t('auth.signInHere')}</Text>
+						</Text>
+					</Pressable>
 				</ScrollView>
 			</View>
 		</KeyboardAvoidingView>

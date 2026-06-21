@@ -3,7 +3,7 @@ import { toLessonListItem, toSectionDTO } from '@/lib/mobile/dto'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
 import SectionQuiz from '@/database/section-quiz.model'
-import LessonProgress from '@/database/lesson-progress.model'
+import { getLessonProgressMap } from '@/lib/learning-progress'
 
 export async function GET(
 	req: Request,
@@ -20,13 +20,11 @@ export async function GET(
 			const lessons = await Lesson.find({ section: sec._id })
 				.sort({ position: 1 })
 				.lean()
-			const progresses = await LessonProgress.find({
-				student: user._id,
-				lesson: { $in: lessons.map((l: any) => l._id) },
-			}).lean()
-			const progByLesson = new Map(
-				progresses.map((p: any) => [String(p.lesson), p])
-			)
+			const progByLesson = await getLessonProgressMap({
+				clerkId: user.clerkId,
+				studentId: user._id,
+				lessonIds: lessons.map((l: any) => l._id),
+			})
 			const lessonItems = lessons.map((l: any) =>
 				toLessonListItem(l, progByLesson.get(String(l._id)))
 			)

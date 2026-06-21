@@ -12,10 +12,10 @@ export function clerkErrorMessage(
 		(err instanceof Error ? err.message : fallback)
 
 	if (/verification strategy is not valid/i.test(message)) {
-		return 'This account uses Google sign-in. Please use "Sign in with Google".'
+		return 'Email/password sign-in is not enabled for this account. Use Google sign-in or add a password in Clerk.'
 	}
-	if (/email_code does not match/i.test(message)) {
-		return 'Email code sign-in is disabled in Clerk. Enable "Email verification code" in the dashboard.'
+	if (/password/i.test(message) && /incorrect|invalid|wrong/i.test(message)) {
+		return 'Email or password is incorrect.'
 	}
 
 	return message

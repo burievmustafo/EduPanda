@@ -26,7 +26,7 @@ export function HomeCourseRailSection({
 }: Props) {
 	const { t } = useTranslation()
 	const toggleSaved = useSavedCourses((s) => s.toggle)
-	const isSaved = useSavedCourses((s) => s.isSaved)
+	const savedIds = useSavedCourses((s) => s.ids)
 
 	if (courses.length === 0) {
 		return (
@@ -64,7 +64,7 @@ export function HomeCourseRailSection({
 								params: { courseId: course.id },
 							})
 						}
-						saved={isSaved(course.id)}
+						saved={savedIds.includes(course.id)}
 						onBookmarkPress={() => void toggleSaved(course.id)}
 					/>
 				))}

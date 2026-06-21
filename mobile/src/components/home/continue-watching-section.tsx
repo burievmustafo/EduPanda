@@ -31,6 +31,7 @@ export function ContinueWatchingSection({ items, courses, loading }: Props) {
 				instructorName: course?.instructor.fullName ?? '',
 				previewImage: course?.previewImage,
 				category: course?.category,
+				averageRating: course?.averageRating ?? 0,
 			}
 		})
 	}, [items, courses])
@@ -72,6 +73,7 @@ export function ContinueWatchingSection({ items, courses, loading }: Props) {
 						percent={row.percent}
 						thumbnailUri={row.previewImage}
 						category={row.category}
+						rating={row.averageRating > 0 ? row.averageRating.toFixed(1) : undefined}
 						completedLabel={t('home.percentCompleted', { percent: row.percent })}
 						onPress={() =>
 							router.push({

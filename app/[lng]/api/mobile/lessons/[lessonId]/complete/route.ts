@@ -3,6 +3,7 @@ import { lessonDurationSec } from '@/lib/mobile/dto'
 import Lesson from '@/database/lesson.model'
 import Section from '@/database/section.model'
 import LessonProgress from '@/database/lesson-progress.model'
+import { markUserProgressComplete } from '@/lib/learning-progress'
 
 export async function POST(
 	req: Request,
@@ -44,6 +45,7 @@ export async function POST(
 			},
 			{ upsert: true }
 		)
+		await markUserProgressComplete(user.clerkId, (lesson as any)._id)
 
 		return ok({ isCompleted: true, watchedPercent })
 	} catch (e) {

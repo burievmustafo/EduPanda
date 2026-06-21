@@ -75,7 +75,7 @@ export const answerTimedQuestion = (
 /* ---------------------------------- Quiz ----------------------------------- */
 
 export const getSectionQuiz = (sectionId: string) =>
-	apiGet<QuizDTO>(`/sections/${sectionId}/quiz`)
+	apiGet<QuizDTO>(`/sections/${sectionId}/quiz?t=${Date.now()}`)
 
 export const submitQuiz = (quizId: string, answers: QuizAnswerInput[]) =>
 	apiPost<QuizAttemptResultDTO>(`/quizzes/${quizId}/submit`, { answers })

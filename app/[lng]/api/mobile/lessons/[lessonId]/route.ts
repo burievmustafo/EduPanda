@@ -5,7 +5,7 @@ import Lesson from '@/database/lesson.model'
 import Section from '@/database/section.model'
 import TimedQuestion from '@/database/timed-question.model'
 import TimedQuestionAnswer from '@/database/timed-question-answer.model'
-import LessonProgress from '@/database/lesson-progress.model'
+import { getLessonProgressMap } from '@/lib/learning-progress'
 
 export async function GET(
 	req: Request,
@@ -28,10 +28,12 @@ export async function GET(
 			lesson: (lesson as any)._id,
 			isPublished: true,
 		}).lean()
-		const progress = await LessonProgress.findOne({
-			student: user._id,
-			lesson: (lesson as any)._id,
-		}).lean()
+		const progressMap = await getLessonProgressMap({
+			clerkId: user.clerkId,
+			studentId: user._id,
+			lessonIds: [(lesson as any)._id],
+		})
+		const progress = progressMap.get(String((lesson as any)._id))
 		const answers = await TimedQuestionAnswer.find({
 			student: user._id,
 			lesson: (lesson as any)._id,

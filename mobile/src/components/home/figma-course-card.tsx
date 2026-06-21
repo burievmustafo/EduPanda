@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 
 
 
+import { CoursePreviewImage } from '@/components/course/course-preview-image'
 import { AppText } from '@/components/ui/app-text'
 
 import { useFigmaTheme } from '@/design/figma-theme'
@@ -11,7 +12,6 @@ import { useFigmaTheme } from '@/design/figma-theme'
 import { spacing } from '@/design/tokens'
 
 import { categoryColor } from '@/lib/category-colors'
-import { getFigmaMockRating } from '@/lib/figma-mock-rating'
 
 import { useLocale } from '@/hooks/use-locale'
 
@@ -42,7 +42,7 @@ export function FigmaCourseCard({ course, onPress, onBookmarkPress, saved }: Pro
 	const locale = useLocale()
 	const theme = useFigmaTheme()
 
-	const rating = getFigmaMockRating(course.id)
+	const rating = course.averageRating > 0 ? course.averageRating.toFixed(1) : null
 	const thumbColor = categoryColor(course.category)
 
 	return (
@@ -57,31 +57,19 @@ export function FigmaCourseCard({ course, onPress, onBookmarkPress, saved }: Pro
 
 			<View style={[styles.posterWrap, { backgroundColor: theme.progressTrack }]}>
 
-				{course.previewImage ? (
-
-					<Image
-
-						source={{ uri: course.previewImage }}
-
-						style={styles.poster}
-
-						resizeMode="cover"
-
-						accessibilityIgnoresInvertColors
-
-					/>
-
-				) : (
-
-					<View style={[styles.posterPlaceholder, { backgroundColor: thumbColor }]} />
-
-				)}
+				<CoursePreviewImage
+					uri={course.previewImage}
+					style={styles.poster}
+					containerStyle={styles.posterPlaceholder}
+					iconSize={24}
+					labelSize={7}
+				/>
 
 				<Pressable
 
 					onPress={onBookmarkPress}
 
-					style={styles.bookmark}
+					style={[styles.bookmark, { backgroundColor: saved ? theme.accent : 'rgba(255,255,255,0.85)' }]}
 
 					hitSlop={8}
 
@@ -91,8 +79,8 @@ export function FigmaCourseCard({ course, onPress, onBookmarkPress, saved }: Pro
 
 					<Ionicons
 						name={saved ? 'bookmark' : 'bookmark-outline'}
-						size={18}
-						color={theme.heading}
+						size={14}
+						color={saved ? '#FFFFFF' : theme.heading}
 					/>
 
 				</Pressable>
@@ -111,17 +99,19 @@ export function FigmaCourseCard({ course, onPress, onBookmarkPress, saved }: Pro
 
 			</AppText>
 
-			<View style={styles.ratingRow}>
+			{rating ? (
+				<View style={styles.ratingRow}>
 
-				<Ionicons name="star" size={10} color={theme.accent} />
+					<Ionicons name="star" size={10} color={theme.accent} />
 
-				<AppText variant="small" style={[styles.ratingText, { color: theme.heading }]}>
+					<AppText variant="small" style={[styles.ratingText, { color: theme.heading }]}>
 
-					{rating}
+						{rating}
 
-				</AppText>
+					</AppText>
 
-			</View>
+				</View>
+			) : null}
 
 		</Pressable>
 
@@ -164,7 +154,9 @@ const styles = StyleSheet.create({
 	posterPlaceholder: {
 		width: '100%',
 		height: '100%',
-		opacity: 0.92,
+		alignItems: 'center' as const,
+		justifyContent: 'center' as const,
+		gap: 2,
 	},
 
 	bookmark: {
@@ -174,6 +166,16 @@ const styles = StyleSheet.create({
 		top: 6,
 
 		right: 6,
+
+		width: 28,
+
+		height: 28,
+
+		borderRadius: 14,
+
+		alignItems: 'center' as const,
+
+		justifyContent: 'center' as const,
 
 	},
 

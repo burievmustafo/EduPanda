@@ -166,7 +166,7 @@ function LessonList({ lesson, sectionId }: LessonProps) {
 		if (checked) {
 			promise = completeLesson(lesson._id, userId!, pathname)
 		} else {
-			promise = uncompleteLesson(lesson._id, pathname)
+			promise = uncompleteLesson(lesson._id, userId!, pathname)
 		}
 
 		promise.finally(() => setIsLoading(false))

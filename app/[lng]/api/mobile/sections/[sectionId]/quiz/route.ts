@@ -5,7 +5,11 @@ import SectionQuiz from '@/database/section-quiz.model'
 import QuizQuestion from '@/database/quiz-question.model'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
-import LessonProgress from '@/database/lesson-progress.model'
+import { countCompletedLessons } from '@/lib/learning-progress'
+import { getQuizAttempts } from '@/lib/quiz-attempt'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function GET(
 	req: Request,
@@ -22,10 +26,10 @@ export async function GET(
 			const lessons = await Lesson.find({ section: params.sectionId })
 				.select('_id')
 				.lean()
-			const completed = await LessonProgress.countDocuments({
-				student: user._id,
-				lesson: { $in: lessons.map((lesson: any) => lesson._id) },
-				isCompleted: true,
+			const completed = await countCompletedLessons({
+				clerkId: user.clerkId,
+				studentId: user._id,
+				lessonIds: lessons.map((lesson: any) => lesson._id),
 			})
 			if (lessons.length > 0 && completed < lessons.length) {
 				throw new ApiError(
@@ -42,7 +46,14 @@ export async function GET(
 		if (!quiz) throw new ApiError(404, 'not_found', 'Quiz not found')
 
 		const questions = await QuizQuestion.find({ quiz: (quiz as any)._id }).lean()
-		return ok(toQuizDTO(quiz, questions))
+		const attempts = await getQuizAttempts({
+			studentId: user._id,
+			quizId: (quiz as any)._id,
+			questions,
+			localizedExplanation: true,
+		})
+		const latestAttempt = attempts[0] ?? null
+		return ok(toQuizDTO(quiz, questions, latestAttempt, attempts))
 	} catch (e) {
 		return handleError(e)
 	}

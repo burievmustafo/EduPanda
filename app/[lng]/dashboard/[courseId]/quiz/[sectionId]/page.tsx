@@ -4,6 +4,7 @@ import { ChevronLeftCircle } from 'lucide-react'
 import Link from 'next/link'
 import QuizRunner from './_components/quiz-runner'
 import { translation } from '@/i18n/server'
+import { auth } from '@clerk/nextjs/server'
 
 interface Props {
 	params: { courseId: string; sectionId: string; lng: string }
@@ -11,7 +12,8 @@ interface Props {
 
 async function Page({ params: { courseId, sectionId, lng } }: Props) {
 	const { t } = await translation(lng)
-	const quiz = await getSectionQuizForStudent(sectionId)
+	const { userId } = auth()
+	const quiz = await getSectionQuizForStudent(sectionId, userId || undefined)
 
 	return (
 		<div className='mx-auto w-full max-w-3xl'>

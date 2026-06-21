@@ -8,9 +8,9 @@ import Course from '@/database/course.model'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
 import Purchase from '@/database/purchase.model'
-import UserProgress from '@/database/user-progress.model'
 import SectionQuiz from '@/database/section-quiz.model'
 import QuizAttempt from '@/database/quiz-attempt.model'
+import { countCompletedLessons, getLessonProgressMap } from '@/lib/learning-progress'
 
 // Joriy foydalanuvchi kurs egasimi (yoki admin) — tekshiradi.
 async function requireOwnedCourse(courseId: string) {
@@ -59,11 +59,10 @@ export const getCourseStudents = async (courseId: string) => {
 				const user = p.user
 				if (!user) return null
 
-				// Dars progressi (web UserProgress clerkId bilan saqlaydi).
-				const completed = await UserProgress.countDocuments({
-					userId: user.clerkId,
-					lessonId: { $in: lessonIds },
-					isCompleted: true,
+				const completed = await countCompletedLessons({
+					clerkId: user.clerkId,
+					studentId: user._id,
+					lessonIds,
 				})
 				const progressPercent =
 					totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0
@@ -84,6 +83,11 @@ export const getCourseStudents = async (courseId: string) => {
 				const avgScore = results.length
 					? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
 					: null
+				const lastAttempt = attempts.sort(
+					(a: any, b: any) =>
+						new Date(b.submittedAt || b.createdAt).getTime() -
+						new Date(a.submittedAt || a.createdAt).getTime()
+				)[0]
 
 				return {
 					studentId: String(user._id),
@@ -98,11 +102,140 @@ export const getCourseStudents = async (courseId: string) => {
 					quizzesTotal: quizIds.length,
 					passedCount: results.filter(r => r.passed).length,
 					avgScore,
+					lastAttemptAt: lastAttempt?.submittedAt || lastAttempt?.createdAt || null,
 				}
 			})
 		)
 
 		return JSON.parse(JSON.stringify(students.filter(Boolean)))
+	} catch (error) {
+		throw new Error('Something went wrong!')
+	}
+}
+
+export const getCourseStudentResults = async (
+	courseId: string,
+	studentId: string
+) => {
+	try {
+		await connectToDatabase()
+		await requireOwnedCourse(courseId)
+
+		const student: any = await User.findById(studentId)
+			.select('_id clerkId fullName email picture')
+			.lean()
+		if (!student) throw new Error('Student not found')
+
+		const purchase = await Purchase.findOne({
+			course: courseId,
+			user: student._id,
+		}).lean()
+		if (!purchase) throw new Error('Student is not enrolled in this course')
+
+		const sections = await Section.find({ course: courseId })
+			.select('_id title titleI18n position')
+			.sort({ position: 1 })
+			.lean()
+		const sectionIds = sections.map((section: any) => section._id)
+		const lessons = await Lesson.find({ section: { $in: sectionIds } })
+			.select('_id title titleI18n section position')
+			.sort({ position: 1 })
+			.lean()
+		const lessonIds = lessons.map((lesson: any) => lesson._id)
+		const progressByLesson = await getLessonProgressMap({
+			clerkId: student.clerkId,
+			studentId: student._id,
+			lessonIds,
+		})
+
+		const quizzes = await SectionQuiz.find({ section: { $in: sectionIds } })
+			.select('_id section title passScore')
+			.lean()
+		const quizIds = quizzes.map((quiz: any) => quiz._id)
+		const attempts = await QuizAttempt.find({
+			student: student._id,
+			quiz: { $in: quizIds },
+		})
+			.sort({ submittedAt: -1, createdAt: -1 })
+			.lean()
+
+		const attemptsByQuiz = new Map<string, any[]>()
+		attempts.forEach((attempt: any) => {
+			const key = String(attempt.quiz)
+			attemptsByQuiz.set(key, [...(attemptsByQuiz.get(key) || []), attempt])
+		})
+
+		const lessonsBySection = new Map<string, any[]>()
+		lessons.forEach((lesson: any) => {
+			const key = String(lesson.section)
+			lessonsBySection.set(key, [...(lessonsBySection.get(key) || []), lesson])
+		})
+
+		const quizzesBySection = new Map<string, any[]>()
+		quizzes.forEach((quiz: any) => {
+			const key = String(quiz.section)
+			quizzesBySection.set(key, [...(quizzesBySection.get(key) || []), quiz])
+		})
+
+		const sectionResults = sections.map((section: any) => {
+			const sectionLessons = lessonsBySection.get(String(section._id)) || []
+			const completedLessons = sectionLessons.filter((lesson: any) => {
+				const progress = progressByLesson.get(String(lesson._id))
+				return Boolean(progress?.isCompleted)
+			})
+			const sectionQuizzes = quizzesBySection.get(String(section._id)) || []
+
+			return {
+				sectionId: String(section._id),
+				title: section.titleI18n?.en || section.titleI18n?.ja || section.title || '',
+				completedLessons: completedLessons.length,
+				totalLessons: sectionLessons.length,
+				progressPercent: sectionLessons.length
+					? Math.round((completedLessons.length / sectionLessons.length) * 100)
+					: 0,
+				lessons: sectionLessons.map((lesson: any) => {
+					const progress = progressByLesson.get(String(lesson._id))
+					return {
+						lessonId: String(lesson._id),
+						title: lesson.titleI18n?.en || lesson.titleI18n?.ja || lesson.title || '',
+						isCompleted: Boolean(progress?.isCompleted),
+						watchedPercent: progress?.watchedPercent ?? 0,
+					}
+				}),
+				quizzes: sectionQuizzes.map((quiz: any) => {
+					const quizAttempts = attemptsByQuiz.get(String(quiz._id)) || []
+					const bestAttempt = quizAttempts.reduce((best: any, attempt: any) => {
+						if (!best || (attempt.score ?? 0) > (best.score ?? 0)) return attempt
+						return best
+					}, null)
+					const latestAttempt = quizAttempts[0]
+					return {
+						quizId: String(quiz._id),
+						title: quiz.title?.en || quiz.title?.ja || 'Quiz',
+						passScore: quiz.passScore ?? 70,
+						attemptsCount: quizAttempts.length,
+						bestScore: bestAttempt?.score ?? null,
+						bestPassed: bestAttempt?.passed ?? false,
+						latestScore: latestAttempt?.score ?? null,
+						latestPassed: latestAttempt?.passed ?? false,
+						latestSubmittedAt:
+							latestAttempt?.submittedAt || latestAttempt?.createdAt || null,
+					}
+				}),
+			}
+		})
+
+		return JSON.parse(
+			JSON.stringify({
+				student: {
+					studentId: String(student._id),
+					fullName: student.fullName,
+					email: student.email,
+					picture: student.picture,
+				},
+				sections: sectionResults,
+			})
+		)
 	} catch (error) {
 		throw new Error('Something went wrong!')
 	}

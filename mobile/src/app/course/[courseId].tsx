@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { CoursePreviewImage } from '@/components/course/course-preview-image'
 import { CourseGradesTab } from '@/components/course/course-grades-tab'
 import { CourseInfoTab } from '@/components/course/course-info-tab'
 import { CourseOptionsSheet } from '@/components/course/course-options-sheet'
@@ -205,7 +206,10 @@ export default function CourseDetailScreen() {
 									onPress={() =>
 										router.push({
 											pathname: '/quiz/[sectionId]',
-											params: { sectionId: selectedSection.id },
+											params: {
+												sectionId: selectedSection.id,
+												refresh: String(Date.now()),
+											},
 										})
 									}
 								/>
@@ -275,9 +279,12 @@ function CourseDisplay({ course, sections }: { course: CourseDTO; sections: Sect
 				showsVerticalScrollIndicator={false}
 				contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}>
 				<View style={styles.displayHero}>
-					<Image
-						source={{ uri: course.previewImage ?? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900' }}
+					<CoursePreviewImage
+						uri={course.previewImage}
 						style={styles.heroImage}
+						containerStyle={styles.heroImage}
+						iconSize={40}
+						labelSize={12}
 					/>
 					{allLessons.length > 0 ? (
 						<Pressable

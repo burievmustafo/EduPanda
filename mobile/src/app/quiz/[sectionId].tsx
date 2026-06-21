@@ -1,7 +1,7 @@
-import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { getSectionQuiz, submitQuiz } from '@/api/learning';
 import { LoadingState, Screen } from '@/components/screen';
@@ -9,16 +9,83 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BRAND, Button } from '@/components/ui-button';
 import { Spacing } from '@/constants/theme';
-import { useAsync } from '@/hooks/use-async';
 import { useLocale } from '@/hooks/use-locale';
 import { useTheme } from '@/hooks/use-theme';
 import { tText } from '@/lib/localized';
+import { cacheQuizAttempt, getCachedQuizAttempt } from '@/lib/quiz-attempt-cache';
 import type { QuizAttemptResultDTO, QuizDTO } from '@/types/dto';
 
+function resolveSectionId(sectionId: string | string[] | undefined) {
+  if (Array.isArray(sectionId)) return sectionId[0];
+  return sectionId;
+}
+
+async function hydrateQuizAttempts(quiz: QuizDTO): Promise<QuizDTO> {
+  if (quiz.latestAttempt) {
+    await cacheQuizAttempt(quiz.id, quiz.latestAttempt);
+    return quiz;
+  }
+
+  const cached = await getCachedQuizAttempt(quiz.id);
+  if (!cached) return quiz;
+
+  const attempts = [
+    cached,
+    ...(quiz.attempts ?? []).filter((attempt) => attempt.attemptId !== cached.attemptId),
+  ];
+
+  return {
+    ...quiz,
+    latestAttempt: cached,
+    attempts,
+  };
+}
+
 export default function QuizScreen() {
-  const { sectionId } = useLocalSearchParams<{ sectionId: string }>();
+  const params = useLocalSearchParams<{ sectionId: string | string[] }>();
+  const sectionId = resolveSectionId(params.sectionId);
   const { t } = useTranslation();
-  const { data: quiz, loading } = useAsync(() => getSectionQuiz(sectionId), [sectionId]);
+  const [quiz, setQuiz] = useState<QuizDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
+
+  const loadQuiz = useCallback(
+    async (options?: { background?: boolean }) => {
+      if (!sectionId) return;
+      if (!options?.background) setLoading(true);
+      try {
+        const nextQuiz = await hydrateQuizAttempts(await getSectionQuiz(sectionId));
+        setQuiz(nextQuiz);
+      } catch (err) {
+        Alert.alert(t('quiz.title'), err instanceof Error ? err.message : t('common.retry'));
+      } finally {
+        if (!options?.background) setLoading(false);
+      }
+    },
+    [sectionId, t]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadQuiz({ background: hasLoadedRef.current });
+      hasLoadedRef.current = true;
+    }, [loadQuiz])
+  );
+
+  const handleAttemptSaved = useCallback((attempt: QuizAttemptResultDTO) => {
+    setQuiz((current) => {
+      if (!current) return current;
+      const attempts = [
+        attempt,
+        ...(current.attempts ?? []).filter((item) => item.attemptId !== attempt.attemptId),
+      ];
+      return {
+        ...current,
+        latestAttempt: attempt,
+        attempts,
+      };
+    });
+  }, []);
 
   if (loading || !quiz) {
     return (
@@ -28,10 +95,23 @@ export default function QuizScreen() {
       </Screen>
     );
   }
-  return <QuizRunner quiz={quiz} />;
+
+  return (
+    <QuizRunner
+      key={`${quiz.id}:${quiz.latestAttempt?.attemptId ?? 'fresh'}`}
+      quiz={quiz}
+      onAttemptSaved={handleAttemptSaved}
+    />
+  );
 }
 
-function QuizRunner({ quiz }: { quiz: QuizDTO }) {
+function QuizRunner({
+  quiz,
+  onAttemptSaved,
+}: {
+  quiz: QuizDTO;
+  onAttemptSaved: (attempt: QuizAttemptResultDTO) => void;
+}) {
   const { t } = useTranslation();
   const locale = useLocale();
   const theme = useTheme();
@@ -39,7 +119,17 @@ function QuizRunner({ quiz }: { quiz: QuizDTO }) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<QuizAttemptResultDTO | null>(null);
+  const [isRetaking, setIsRetaking] = useState(false);
+  const [result, setResult] = useState<QuizAttemptResultDTO | null>(quiz.latestAttempt ?? null);
+
+  useEffect(() => {
+    if (isRetaking) return;
+    setResult(quiz.latestAttempt ?? null);
+    if (quiz.latestAttempt) {
+      setAnswers({});
+      setIndex(0);
+    }
+  }, [quiz.latestAttempt?.attemptId, isRetaking]);
 
   const total = quiz.questions.length;
   const current = quiz.questions[index];
@@ -53,14 +143,28 @@ function QuizRunner({ quiz }: { quiz: QuizDTO }) {
         selectedOptionId: answers[q.id] ?? '',
       }));
       const res = await submitQuiz(quiz.id, payload);
+      await cacheQuizAttempt(quiz.id, res);
+      setIsRetaking(false);
       setResult(res);
+      onAttemptSaved(res);
     } finally {
       setSubmitting(false);
     }
   };
 
   if (result) {
-    return <QuizResult quiz={quiz} result={result} />;
+    return (
+      <QuizResult
+        quiz={quiz}
+        result={result}
+        onRetake={() => {
+          setIsRetaking(true);
+          setResult(null);
+          setAnswers({});
+          setIndex(0);
+        }}
+      />
+    );
   }
 
   return (
@@ -82,7 +186,10 @@ function QuizRunner({ quiz }: { quiz: QuizDTO }) {
               onPress={() => setAnswers((a) => ({ ...a, [current.id]: opt.id }))}
               style={[
                 styles.option,
-                { backgroundColor: theme.backgroundElement, borderColor: selected ? BRAND : theme.backgroundSelected },
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: selected ? BRAND : theme.backgroundSelected,
+                },
               ]}>
               <ThemedText>{tText(opt.text, locale)}</ThemedText>
             </Pressable>
@@ -118,11 +225,23 @@ function QuizRunner({ quiz }: { quiz: QuizDTO }) {
   );
 }
 
-function QuizResult({ quiz, result }: { quiz: QuizDTO; result: QuizAttemptResultDTO }) {
+function QuizResult({
+  quiz,
+  result,
+  onRetake,
+}: {
+  quiz: QuizDTO;
+  result: QuizAttemptResultDTO;
+  onRetake: () => void;
+}) {
   const { t } = useTranslation();
   const locale = useLocale();
   const theme = useTheme();
   const color = result.passed ? '#16a34a' : '#dc2626';
+  const history = [
+    result,
+    ...(quiz.attempts ?? []).filter((attempt) => attempt.attemptId !== result.attemptId),
+  ];
 
   return (
     <Screen>
@@ -141,38 +260,82 @@ function QuizResult({ quiz, result }: { quiz: QuizDTO; result: QuizAttemptResult
         </ThemedText>
       </ThemedView>
 
+      <View style={styles.resultActions}>
+        <Button title={t('quiz.retake')} variant="secondary" onPress={onRetake} style={styles.flex} />
+        <Button title={t('quiz.backToCourse')} onPress={() => router.back()} style={styles.flex} />
+      </View>
+
       <ThemedText type="smallBold" style={styles.heading}>
         {t('quiz.reviewAnswers')}
       </ThemedText>
 
-      {result.review.map((r, i) => {
-        const q = quiz.questions.find((x) => x.id === r.questionId);
-        const yourOpt = q?.options.find((o) => o.id === r.selectedOptionId);
-        const correctOpt = q?.options.find((o) => o.id === r.correctOptionId);
+      {result.review.map((item, index) => {
+        const question = quiz.questions.find((q) => q.id === item.questionId);
         return (
-          <ThemedView key={r.questionId} type="backgroundElement" style={styles.reviewCard}>
+          <ThemedView key={item.questionId} type="backgroundElement" style={styles.reviewCard}>
             <ThemedText type="smallBold">
-              {i + 1}. {q ? tText(q.question, locale) : ''} {r.isCorrect ? '✅' : '❌'}
+              {index + 1}. {question ? tText(question.question, locale) : ''}
             </ThemedText>
-            <ThemedText type="small" style={styles.muted}>
-              {t('quiz.yourAnswer')}: {yourOpt ? tText(yourOpt.text, locale) : '—'}
-            </ThemedText>
-            {!r.isCorrect ? (
-              <ThemedText type="small" style={{ color: '#16a34a' }}>
-                {t('quiz.correctAnswer')}: {correctOpt ? tText(correctOpt.text, locale) : ''}
-              </ThemedText>
-            ) : null}
-            {r.explanation ? (
+            <View style={styles.reviewOptions}>
+              {question?.options.map((option) => {
+                const isCorrect = option.id === item.correctOptionId;
+                const isSelectedWrong = option.id === item.selectedOptionId && !item.isCorrect;
+                return (
+                  <View
+                    key={option.id}
+                    style={[
+                      styles.reviewOption,
+                      isCorrect ? styles.reviewOptionCorrect : null,
+                      isSelectedWrong ? styles.reviewOptionWrong : null,
+                    ]}>
+                    <ThemedText style={styles.reviewOptionText}>
+                      {tText(option.text, locale)}
+                    </ThemedText>
+                    {isCorrect ? (
+                      <ThemedText type="smallBold" style={styles.correctText}>
+                        {t('quiz.correctAnswer')}
+                      </ThemedText>
+                    ) : isSelectedWrong ? (
+                      <ThemedText type="smallBold" style={styles.wrongText}>
+                        {t('quiz.yourAnswer')}
+                      </ThemedText>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+            {item.explanation ? (
               <ThemedText type="small" style={styles.muted}>
-                {tText(r.explanation, locale)}
+                {tText(item.explanation, locale)}
               </ThemedText>
             ) : null}
           </ThemedView>
         );
       })}
 
-      <Button title={t('quiz.backToCourse')} onPress={() => router.back()} />
-      {/* theme refs to avoid unused warnings on some setups */}
+      {history.length > 0 ? (
+        <>
+          <ThemedText type="smallBold" style={styles.heading}>
+            {t('quiz.attemptHistory')}
+          </ThemedText>
+          <View style={styles.historyList}>
+            {history.map((attempt, index) => (
+              <ThemedView key={attempt.attemptId} type="backgroundElement" style={styles.historyRow}>
+                <ThemedText type="smallBold">
+                  #{history.length - index} - {attempt.score}%
+                </ThemedText>
+                <ThemedText
+                  type="small"
+                  style={[styles.muted, { color: attempt.passed ? '#16a34a' : '#dc2626' }]}>
+                  {attempt.passed ? t('quiz.passed') : t('quiz.failed')} - {attempt.correctAnswers}/
+                  {attempt.totalQuestions}
+                </ThemedText>
+              </ThemedView>
+            ))}
+          </View>
+        </>
+      ) : null}
+
       <View style={{ height: 0, borderColor: theme.background }} />
     </Screen>
   );
@@ -184,10 +347,33 @@ const styles = StyleSheet.create({
   options: { gap: Spacing.two },
   option: { borderWidth: 2, borderRadius: 12, padding: Spacing.three },
   nav: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three },
+  resultActions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.three },
+  historyList: { gap: Spacing.one },
+  historyRow: { borderRadius: 12, padding: Spacing.two, gap: 2 },
   flex: { flex: 1 },
   scoreCard: { borderRadius: 16, padding: Spacing.four, alignItems: 'center', gap: Spacing.one },
   scoreBig: { fontSize: 56, fontWeight: '800', lineHeight: 60 },
   heading: { marginTop: Spacing.two, opacity: 0.8 },
   reviewCard: { borderRadius: 12, padding: Spacing.three, gap: 2 },
+  reviewOptions: { gap: Spacing.one, marginTop: Spacing.two },
+  reviewOption: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: Spacing.two,
+    gap: 2,
+  },
+  reviewOptionCorrect: {
+    borderColor: '#22C55E',
+    backgroundColor: '#DCFCE7',
+  },
+  reviewOptionWrong: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEE2E2',
+  },
+  reviewOptionText: { fontWeight: '600' },
+  correctText: { color: '#16a34a' },
+  wrongText: { color: '#dc2626' },
   muted: { opacity: 0.75 },
 });

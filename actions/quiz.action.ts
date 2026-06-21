@@ -7,11 +7,12 @@ import QuizQuestion from '@/database/quiz-question.model'
 import TimedQuestion from '@/database/timed-question.model'
 import TimedQuestionAnswer from '@/database/timed-question-answer.model'
 import QuizAttempt from '@/database/quiz-attempt.model'
-import UserProgress from '@/database/user-progress.model'
 import User from '@/database/user.model'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
 import { sanitizeQuestions, type ParsedQuestion } from '@/lib/quiz-import'
+import { countCompletedLessons } from '@/lib/learning-progress'
+import { getLatestQuizAttempt } from '@/lib/quiz-attempt'
 
 // Variant id'lari (a/b/c/d). correctOptionId shulardan biriga teng bo'ladi.
 const OPTION_IDS = ['a', 'b', 'c', 'd']
@@ -344,7 +345,7 @@ export const answerTimedQuestion = async (params: {
 }
 
 // Section testi (student ko'rinishi). correctOptionId YO'Q.
-export const getSectionQuizForStudent = async (sectionId: string) => {
+export const getSectionQuizForStudent = async (sectionId: string, clerkId?: string) => {
 	try {
 		await connectToDatabase()
 		const quiz: any = await SectionQuiz.findOne({
@@ -356,11 +357,22 @@ export const getSectionQuizForStudent = async (sectionId: string) => {
 		const questions: any[] = await QuizQuestion.find({ quiz: quiz._id })
 			.sort({ order: 1 })
 			.lean()
+		const user = clerkId
+			? await User.findOne({ clerkId }).select('_id').lean()
+			: null
+		const latestAttempt = user
+			? await getLatestQuizAttempt({
+					studentId: (user as any)._id,
+					quizId: quiz._id,
+					questions,
+			  })
+			: null
 
 		return {
 			quizId: String(quiz._id),
 			title: txt(quiz.title) || 'Final Quiz',
 			passScore: quiz.passScore ?? 70,
+			latestAttempt,
 			questions: questions.map(q => ({
 				id: String(q._id),
 				question: txt(q.question),
@@ -391,15 +403,15 @@ export const submitSectionQuiz = async (params: {
 		const quiz: any = await SectionQuiz.findById(quizId).lean()
 		if (!quiz) throw new Error('Quiz not found')
 
-		// Gating: section'dagi barcha darslar tugagan bo'lishi shart (web UserProgress).
+		// Gating: section'dagi barcha darslar tugagan bo'lishi shart.
 		const lessons = await Lesson.find({ section: quiz.section })
 			.select('_id')
 			.lean()
 		const lessonIds = lessons.map((l: any) => String(l._id))
-		const completed = await UserProgress.countDocuments({
-			userId: clerkId,
-			lessonId: { $in: lessonIds },
-			isCompleted: true,
+		const completed = await countCompletedLessons({
+			clerkId,
+			studentId: user._id,
+			lessonIds,
 		})
 		if (lessonIds.length > 0 && completed < lessonIds.length) {
 			throw new Error('QUIZ_LOCKED')
@@ -428,7 +440,7 @@ export const submitSectionQuiz = async (params: {
 				: 0
 		const passed = score >= (quiz.passScore ?? 70)
 
-		await QuizAttempt.create({
+		const attempt = await QuizAttempt.create({
 			student: user._id,
 			quiz: quiz._id,
 			section: quiz.section,
@@ -445,7 +457,14 @@ export const submitSectionQuiz = async (params: {
 			submittedAt: new Date(),
 		})
 
-		return { totalQuestions, correctAnswers, score, passed, review }
+		return {
+			attemptId: String(attempt._id),
+			totalQuestions,
+			correctAnswers,
+			score,
+			passed,
+			review,
+		}
 	} catch (error) {
 		if (error instanceof Error && error.message === 'QUIZ_LOCKED') {
 			throw new Error('Complete all section lessons before taking the quiz')

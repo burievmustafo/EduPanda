@@ -6,7 +6,7 @@ import QuizQuestion from '@/database/quiz-question.model'
 import QuizAttempt from '@/database/quiz-attempt.model'
 import Section from '@/database/section.model'
 import Lesson from '@/database/lesson.model'
-import LessonProgress from '@/database/lesson-progress.model'
+import { countCompletedLessons } from '@/lib/learning-progress'
 
 export async function POST(
 	req: Request,
@@ -31,10 +31,10 @@ export async function POST(
 			const lessons = await Lesson.find({ section: (quiz as any).section })
 				.select('_id')
 				.lean()
-			const completed = await LessonProgress.countDocuments({
-				student: user._id,
-				lesson: { $in: lessons.map((lesson: any) => lesson._id) },
-				isCompleted: true,
+			const completed = await countCompletedLessons({
+				clerkId: user.clerkId,
+				studentId: user._id,
+				lessonIds: lessons.map((lesson: any) => lesson._id),
 			})
 			if (lessons.length > 0 && completed < lessons.length) {
 				throw new ApiError(

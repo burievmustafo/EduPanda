@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 
+import { CoursePreviewImage } from '@/components/course/course-preview-image'
 import { AppText } from '@/components/ui/app-text'
 import { useFigmaTheme } from '@/design/figma-theme'
 import { spacing } from '@/design/tokens'
-import { categoryColor } from '@/lib/category-colors'
 import type { MyCourseRow } from '@/lib/my-courses-data'
 
 type Props = {
@@ -18,7 +18,6 @@ type Props = {
 export function MyCoursesProgressCard({ row, variant, onPress, onCertificate }: Props) {
 	const { t } = useTranslation()
 	const theme = useFigmaTheme()
-	const thumbColor = categoryColor(row.category)
 	const showProgress = variant === 'inProgress'
 
 	return (
@@ -34,11 +33,13 @@ export function MyCoursesProgressCard({ row, variant, onPress, onCertificate }: 
 				pressed && styles.pressed,
 			]}>
 			<View style={styles.thumbWrap}>
-				{row.previewImage ? (
-					<Image source={{ uri: row.previewImage }} style={styles.thumb} resizeMode="cover" />
-				) : (
-					<View style={[styles.thumbPlaceholder, { backgroundColor: thumbColor }]} />
-				)}
+				<CoursePreviewImage
+					uri={row.previewImage}
+					style={styles.thumb}
+					containerStyle={styles.thumbPlaceholder}
+					iconSize={20}
+					labelSize={7}
+				/>
 				<View style={[styles.thumbOverlay, { backgroundColor: theme.thumbOverlay }]} />
 			</View>
 

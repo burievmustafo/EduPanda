@@ -36,6 +36,8 @@ export type CourseDTO = {
   sectionsCount: number;
   lessonsCount: number;
   isEnrolled: boolean;
+  averageRating: number;
+  reviewCount: number;
 };
 
 export type LessonListItemDTO = {
@@ -104,6 +106,8 @@ export type QuizDTO = {
   title: LocalizedText;
   passScore: number;
   timeLimitMin?: number;
+  latestAttempt?: QuizAttemptResultDTO | null;
+  attempts?: QuizAttemptResultDTO[];
   questions: QuizQuestionDTO[];
 };
 

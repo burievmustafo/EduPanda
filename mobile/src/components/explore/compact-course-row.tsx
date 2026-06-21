@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 
+import { CoursePreviewImage } from '@/components/course/course-preview-image'
 import { AppText } from '@/components/ui/app-text'
-import { colors, layout, radius, spacing } from '@/design/tokens'
+import { spacing, layout, radius } from '@/design/tokens'
 import { useLocale } from '@/hooks/use-locale'
-import { useColorScheme } from '@/hooks/use-color-scheme'
-import { getPalette } from '@/design/theme'
 import { tText } from '@/lib/localized'
 import type { CourseDTO } from '@/types/dto'
 
@@ -16,8 +15,6 @@ type CompactCourseRowProps = {
 
 export function CompactCourseRow({ course, onPress }: CompactCourseRowProps) {
 	const locale = useLocale()
-	const scheme = useColorScheme()
-	const palette = getPalette(scheme === 'dark' ? 'dark' : 'light')
 
 	return (
 		<Pressable
@@ -34,19 +31,19 @@ export function CompactCourseRow({ course, onPress }: CompactCourseRowProps) {
 					{course.category} · {course.level}
 				</AppText>
 				<View style={styles.metaRow}>
-					<Ionicons name="book-outline" size={14} color={palette.textTertiary} />
+					<Ionicons name="book-outline" size={14} color="#6C6C6C" />
 					<AppText variant="small" color="tertiary">
 						{course.lessonsCount} lessons
 					</AppText>
 				</View>
 			</View>
-			{course.previewImage ? (
-				<Image source={{ uri: course.previewImage }} style={styles.thumb} />
-			) : (
-				<View style={[styles.thumb, styles.thumbPlaceholder, { backgroundColor: palette.surfaceMuted }]}>
-					<Ionicons name="school-outline" size={28} color={colors.primary} />
-				</View>
-			)}
+			<CoursePreviewImage
+				uri={course.previewImage}
+				style={styles.thumb}
+				containerStyle={[styles.thumb, styles.thumbPlaceholder]}
+				iconSize={28}
+				labelSize={8}
+			/>
 		</Pressable>
 	)
 }

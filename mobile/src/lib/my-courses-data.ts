@@ -1,5 +1,4 @@
 import type { CourseProgressItem } from '@/api/dashboards'
-import { getFigmaMockRating } from '@/lib/figma-mock-rating'
 import { tText } from '@/lib/localized'
 import type { CourseDTO, Locale } from '@/types/dto'
 
@@ -31,7 +30,7 @@ export function buildInProgressRows(
 				title: tText(row.title, locale),
 				institution: course?.instructor.fullName ?? '',
 				description: course ? tText(course.description, locale) : '',
-				rating: getFigmaMockRating(row.courseId),
+				rating: course?.averageRating ? course.averageRating.toFixed(1) : '',
 				percent: row.percent,
 				lessonsCount: row.totalLessons,
 				previewImage: course?.previewImage,
@@ -54,7 +53,7 @@ export function buildCompletedRows(
 				title: tText(row.title, locale),
 				institution: course?.instructor.fullName ?? '',
 				description: course ? tText(course.description, locale) : '',
-				rating: getFigmaMockRating(row.courseId),
+				rating: course?.averageRating ? course.averageRating.toFixed(1) : '',
 				percent: 100,
 				lessonsCount: row.totalLessons,
 				previewImage: course?.previewImage,
@@ -77,7 +76,7 @@ export function buildSavedRows(
 			title: tText(course.title, locale),
 			institution: course.instructor.fullName,
 			description: tText(course.description, locale),
-			rating: getFigmaMockRating(course.id),
+			rating: course.averageRating ? course.averageRating.toFixed(1) : '',
 			percent: 0,
 			lessonsCount: course.lessonsCount,
 			previewImage: course.previewImage,
@@ -85,9 +84,3 @@ export function buildSavedRows(
 		}))
 }
 
-/** Demo: birinchi enroll qilinmagan kursni saved ga qo‘shish (bo‘sh holat test). */
-export function getDefaultSavedSeed(courses: CourseDTO[] | undefined): string[] {
-	if (!courses?.length) return []
-	const first = courses.find((c) => !c.isEnrolled)
-	return first ? [first.id] : []
-}

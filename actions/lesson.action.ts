@@ -7,6 +7,9 @@ import Lesson from '@/database/lesson.model'
 import { revalidatePath } from 'next/cache'
 import UserProgress from '@/database/user-progress.model'
 import { ILesson } from '@/app.types'
+import { syncLessonProgressFromClerk } from '@/lib/learning-progress'
+import User from '@/database/user.model'
+import LessonProgress from '@/database/lesson-progress.model'
 
 export const getLessons = async (section: string) => {
 	try {
@@ -121,6 +124,12 @@ export const completeLesson = async (
 			await lesson.save()
 			await newUserProgress.save()
 		}
+		await syncLessonProgressFromClerk({
+			clerkId: userId,
+			lessonId,
+			watchedPercent: 100,
+			isCompleted: true,
+		})
 
 		revalidatePath(path)
 	} catch (error) {
@@ -128,10 +137,21 @@ export const completeLesson = async (
 	}
 }
 
-export const uncompleteLesson = async (lessonId: string, path: string) => {
+export const uncompleteLesson = async (
+	lessonId: string,
+	userId: string,
+	path: string
+) => {
 	try {
 		await connectToDatabase()
-		await UserProgress.findOneAndDelete({ lessonId })
+		await UserProgress.findOneAndDelete({ lessonId, userId })
+		const user = await User.findOne({ clerkId: userId }).select('_id').lean()
+		if (user) {
+			await LessonProgress.findOneAndUpdate(
+				{ student: (user as any)._id, lesson: lessonId },
+				{ isCompleted: false, watchedPercent: 0 }
+			)
+		}
 
 		revalidatePath(path)
 	} catch (error) {

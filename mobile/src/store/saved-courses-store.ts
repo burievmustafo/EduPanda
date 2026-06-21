@@ -7,7 +7,6 @@ type SavedCoursesState = {
 	ids: string[]
 	hydrated: boolean
 	hydrate: () => Promise<void>
-	seedIfEmpty: (ids: string[]) => Promise<void>
 	toggle: (courseId: string) => Promise<void>
 	isSaved: (courseId: string) => boolean
 }
@@ -24,12 +23,6 @@ export const useSavedCourses = create<SavedCoursesState>((set, get) => ({
 		} catch {
 			set({ ids: [], hydrated: true })
 		}
-	},
-
-	seedIfEmpty: async (ids: string[]) => {
-		if (!get().hydrated || get().ids.length > 0 || ids.length === 0) return
-		set({ ids })
-		await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
 	},
 
 	toggle: async (courseId: string) => {
