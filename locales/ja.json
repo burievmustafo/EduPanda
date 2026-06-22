@@ -421,5 +421,16 @@
 	"avgProgress": "平均進捗",
 	"lastActivity": "最終アクティビティ",
 	"viewResults": "結果を見る",
-	"attempts": "受験回数"
+	"attempts": "受験回数",
+	"quizRetake": "もう一度受ける",
+	"quizBackToCourse": "コースに戻る",
+	"quizCorrectLabel": "正解",
+	"quizPassedStatus": "合格",
+	"quizFailedStatus": "不合格",
+	"quizPassLabel": "合格ライン",
+	"quizAnswered": "回答済み: {{count}} / {{total}}",
+	"quizSubmit": "テストを提出",
+	"takeSectionQuiz": "セクションクイズを受ける",
+	"sectionQuizLocked": "セクションクイズ（ロック中）",
+	"sectionQuizLockedHint": "すべてのレッスンを完了するとクイズが解放されます"
 }

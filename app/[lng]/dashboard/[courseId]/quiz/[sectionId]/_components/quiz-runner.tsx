@@ -4,6 +4,7 @@ import { submitSectionQuiz } from '@/actions/quiz.action'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import useTranslate from '@/hooks/use-translate'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@clerk/nextjs'
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
@@ -52,6 +53,7 @@ interface Props {
 
 function QuizRunner({ quiz, courseId, lng }: Props) {
 	const { userId } = useAuth()
+	const t = useTranslate()
 	const [answers, setAnswers] = useState<Record<string, string>>({})
 	const [submitting, setSubmitting] = useState(false)
 	const [result, setResult] = useState<QuizResult | null>(quiz.latestAttempt ?? null)
@@ -84,7 +86,7 @@ function QuizRunner({ quiz, courseId, lng }: Props) {
 			setResult(res)
 			window.scrollTo({ top: 0, behavior: 'smooth' })
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Something went wrong!')
+			toast.error(err instanceof Error ? err.message : t('error'))
 		} finally {
 			setSubmitting(false)
 		}
@@ -112,15 +114,16 @@ function QuizRunner({ quiz, courseId, lng }: Props) {
 						)}
 						<p className='text-3xl font-bold'>{result.score}%</p>
 						<p className='text-sm'>
-							{result.correctAnswers} / {result.totalQuestions} correct ·{' '}
-							{result.passed ? 'Passed' : 'Failed'} (pass {quiz.passScore}%)
+							{result.correctAnswers} / {result.totalQuestions} {t('quizCorrectLabel')} ·{' '}
+							{result.passed ? t('quizPassedStatus') : t('quizFailedStatus')} (
+							{t('quizPassLabel')} {quiz.passScore}%)
 						</p>
 						<div className='mt-3 flex gap-2'>
 							<Button variant={'outline'} onClick={onRetake}>
-								Retake
+								{t('quizRetake')}
 							</Button>
 							<Link href={`/${lng}/dashboard/${courseId}`}>
-								<Button>Back to course</Button>
+								<Button>{t('quizBackToCourse')}</Button>
 							</Link>
 						</div>
 					</CardContent>
@@ -182,11 +185,11 @@ function QuizRunner({ quiz, courseId, lng }: Props) {
 			{!result && (
 				<div className='flex items-center justify-between'>
 					<span className='text-sm text-muted-foreground'>
-						Answered: {answeredCount} / {quiz.questions.length}
+						{t('quizAnswered', { count: answeredCount, total: quiz.questions.length })}
 					</span>
 					<Button onClick={onSubmit} disabled={!allAnswered || submitting}>
 						{submitting && <Loader2 className='mr-2 size-4 animate-spin' />}
-						Submit quiz
+						{t('quizSubmit')}
 					</Button>
 				</div>
 			)}

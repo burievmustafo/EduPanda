@@ -421,5 +421,16 @@
 	"noDescription": "No description",
 	"importAsDraft": "Import as draft",
 	"exportCourse": "Export",
-	"courseExported": "Course exported."
+	"courseExported": "Course exported.",
+	"quizRetake": "Retake",
+	"quizBackToCourse": "Back to course",
+	"quizCorrectLabel": "correct",
+	"quizPassedStatus": "Passed",
+	"quizFailedStatus": "Failed",
+	"quizPassLabel": "pass",
+	"quizAnswered": "Answered: {{count}} / {{total}}",
+	"quizSubmit": "Submit quiz",
+	"takeSectionQuiz": "Take section quiz",
+	"sectionQuizLocked": "Section quiz (locked)",
+	"sectionQuizLockedHint": "Complete all lessons to unlock the quiz"
 }

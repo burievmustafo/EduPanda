@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import useTranslate from '@/hooks/use-translate'
 import { useAuth } from '@clerk/nextjs'
 import { CheckedState } from '@radix-ui/react-checkbox'
 import { ListChecks, Lock, PlayCircle } from 'lucide-react'
@@ -93,6 +94,7 @@ function SectionList({
 	const { get } = useSearchParams()
 	const sectionId = get('s')
 	const { lng, courseId } = useParams()
+	const t = useTranslate()
 
 	const lessonsCompleted =
 		section.lessons.length > 0 &&
@@ -127,15 +129,15 @@ function SectionList({
 							className='mx-auto mt-2 flex h-12 w-[calc(100%-12px)] items-center gap-x-2 rounded-none px-3 text-sm font-medium text-primary hover:bg-secondary'
 						>
 							<ListChecks size={16} />
-							Take section quiz
+							{t('takeSectionQuiz')}
 						</Link>
 					) : (
 						<div
 							className='mx-auto mt-2 flex h-12 w-[calc(100%-12px)] cursor-not-allowed items-center gap-x-2 rounded-none px-3 text-sm text-muted-foreground'
-							title='Complete all lessons to unlock the quiz'
+							title={t('sectionQuizLockedHint')}
 						>
 							<Lock size={16} />
-							Section quiz (locked)
+							{t('sectionQuizLocked')}
 						</div>
 					))}
 			</AccordionContent>
