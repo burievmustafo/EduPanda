@@ -142,13 +142,17 @@ export const getDetailedCourse = cache(async (id: string) => {
 
 		const course = await Course.findById(id)
 			.select(
-				'title description instructor previewImage oldPrice currentPrice learning requirements tags updatedAt level category language'
+				'title description instructor previewImage oldPrice currentPrice learning requirements tags updatedAt level category language published'
 			)
 			.populate({
 				path: 'instructor',
 				select: 'fullName picture clerkId',
 				model: User,
 			})
+
+		if (!course || !course.published) {
+			throw new Error('Course not found')
+		}
 
 		const sections = await Section.find({ course: id }).populate({
 			path: 'lessons',
@@ -194,7 +198,7 @@ export const getAllCourses = async (params: GetAllCoursesParams) => {
 
 		const skipAmount = (page - 1) * pageSize
 
-		const query: FilterQuery<typeof Course> = {}
+		const query: FilterQuery<typeof Course> = { published: true }
 
 		if (searchQuery) {
 			query.$or = [{ title: { $regex: new RegExp(searchQuery, 'i') } }]
