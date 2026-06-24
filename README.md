@@ -1,92 +1,136 @@
-<h1 align="center" id="title">NextGen Learning Platform:  Online Education</h1>
+# EduPanda
 
-<p id="description">Embark on a transformative journey in online education with our pioneering project e-learning landscape. Leveraging cutting-edge technologies and a suite of professional features our platform empowers users to engage learn and grow like never before.</p>
+Online learning platform with a **Next.js web app** and an **Expo (React Native) mobile app**. Students browse courses, watch lessons, answer timed questions, and take section quizzes. Instructors manage courses, sections, lessons, and quizzes from the web dashboard.
 
+**Live demo (web):** [https://edu-panda-wine.vercel.app](https://edu-panda-wine.vercel.app)
 
-
-<h2>🧐 Features</h2>
-
-Here're some of the project's best features:
-
-- Clerk for Seamless User Authentication and Management: With Clerk we ensure secure and effortless user authentication and management fostering a smooth learning experience for our users.
-- Stripe for Robust Payment Solutions and Customer Management: Integrated with Stripe our platform offers seamless payment processing allowing users to manage their cards and apply coupons effortlessly enhancing their purchasing experience.
-- I18next for Multilingual Localization: Embracing diversity our project supports localization in four languages: Japanese and English enabling learners worldwide to access content in their preferred language.
-- ShadcnUI for Intuitive UI Components and Dynamic Themes: ShadcnUI empowers us to deliver an immersive learning environment with intuitive UI components and dynamic themes including both dark and light modes ensuring optimal user experience across devices.
-- MongoDB for Robust Database Management: Backed by MongoDB our platform ensures reliable and scalable data storage facilitating seamless content delivery and user interaction.
-- OpenAI Integration for Enhanced Learning Capabilities: By integrating OpenAI we introduce advanced features such as conversation simulation code generation and image generation enriching the learning experience with AI-driven insights and creativity.
-- Server Actions and Node ExpressJS API Handlers: Utilizing Node.js with ExpressJS our platform implements efficient server actions and API handlers ensuring seamless communication between the client and server enabling real-time updates and delivering dynamic content with minimal latency.
-- Personalized Learning Paths: Our platform utilizes advanced algorithms to analyze user behavior and preferences offering personalized learning paths tailored to individual needs and goals.
-- Interactive Assessments and Quizzes: Foster active learning with interactive assessments and quizzes providing learners with real-time feedback and opportunities for self-assessment.
-- Certification and Badging: Recognize and validate learner achievements with certifications and badges enhancing motivation and credibility within the learning community.
-- Progress Tracking and Analytics: Empower users to track their progress monitor learning milestones and gain valuable insights through comprehensive analytics and progress tracking tools.
-
-<h2>🛠️ Installation Steps:</h2>
-
-<p>2. Install packages</p>
+## Project structure
 
 ```
+├── app/                 # Next.js App Router (web + /api/mobile/* backend)
+├── actions/             # Server actions
+├── components/          # Web UI components
+├── database/            # Mongoose models
+├── lib/                 # Shared server utilities
+├── locales/             # Web i18n (en, ja)
+├── mobile/              # Expo React Native app (Android / iOS)
+└── scripts/             # DB seed scripts
+```
+
+| App | Stack | Auth | API |
+|-----|--------|------|-----|
+| **Web** | Next.js 14, React, Tailwind, shadcn/ui | Clerk | Server Actions + MongoDB |
+| **Mobile** | Expo SDK 54, React Native, Expo Router | Clerk Expo | `/en/api/mobile/*` on the Next.js backend |
+
+## Features
+
+### Web
+- Course catalog, enrollment, Stripe payments
+- Student dashboard (lessons, progress, section quizzes)
+- Instructor dashboard (course builder, sections, lessons, timed questions, quizzes)
+- Admin tools
+- Localization: **English** and **Japanese** (`/en`, `/ja`)
+- AI course draft generation (OpenAI)
+- Course import / export (JSON package)
+
+### Mobile
+- Browse and enroll in courses
+- Video lessons with timed in-video questions
+- Section quizzes with attempt history, retake, and result review
+- Saved courses, learning progress, course reviews
+- Teacher dashboard (basic course management)
+- Localization: **English** and **Japanese**
+- Android APK builds via **EAS Build**
+
+## Tech stack
+
+**Frontend (web):** Next.js, React, TypeScript, Tailwind CSS, shadcn/ui, Radix UI, i18next, React Hook Form, Zod
+
+**Mobile:** Expo, React Native, Expo Router, TanStack Query, i18next, Clerk Expo, Stripe React Native, expo-video
+
+**Backend:** Next.js Route Handlers (`/api/mobile/*`), Server Actions, Mongoose, MongoDB
+
+**Services:** Clerk (auth), Stripe (payments), OpenAI (AI course builder), Hygraph (blog CMS), Telegram (notifications), Vimeo / YouTube (video), TinyMCE (rich text)
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB database
+- Clerk application (web + mobile redirect URLs)
+- Accounts for Stripe, etc. as needed (see `.env.example`)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/burievmustafo/EduPanda.git
+cd EduPanda
+```
+
+### 2. Web app
+
+```bash
 npm install
-```
-
-<p>3. Setup .env file</p>
-
-```
-# CLERK AUTHORIZATION
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-CLERK_SECRET_KEY
-NEXT_CLERK_WEBHOOK_SECRET
-NEXT_PUBLIC_CLERK_SIGN_IN_URL
-NEXT_PUBLIC_CLERK_SIGN_UP_URL
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL
-
-# HYGRAPH CMS
-NEXT_PUBLIC_GRAPHCMS_ENDPOINT
-
-# TELEGRAM
-NEXT_PUBLIC_TETELGRAM_BOT_API
-NEXT_PUBLIC_TETELGRAM_CHAT_ID
-
-# MONGODB
-MONGODB_URL
-MONGODB_DB
-
-# TINY EDITOR
-NEXT_PUBLIC_TINY_API_KEY
-
-# BASE URL
-NEXT_PUBLIC_BASE_URL
-
-# STRIPE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-NEXT_PUBLIC_STRIPE_SECRET_KEY
-
-# OPENAI
-OPENAI_API_KEY
-```
-
-<p>4. Start the app</p>
-
-```
+cp .env.example .env
+# Fill in .env with your keys (never commit this file)
 npm run dev
 ```
 
-<h2>💻 Built with</h2>
+Web app: [http://localhost:3000](http://localhost:3000)
 
-Technologies used in the project:
+### 3. Mobile app
 
-- ReactJS
-- NextJS
-- NodeJS
-- ExpressJS
-- Server Actions
-- Stripe
-- ShadcnUI
-- I18next
-- Clerk
-- Hello Pangea
-- Graphql
-- Next Intl
-- Openai
-- Query String
-- Tailwindcss
+```bash
+cd mobile
+npm install
+cp .env.example .env.local
+# Set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY (same Clerk app as web)
+npm start
+```
+
+Use Expo Go or a development build. In dev, the app usually talks to your local API via Metro LAN IP (`http://<your-pc-ip>:3000/en/api/mobile`). For production APKs, set `EXPO_PUBLIC_API_URL` in `mobile/eas.json` or EAS environment variables.
+
+### 4. Android APK (EAS)
+
+```bash
+cd mobile
+npx eas-cli login
+npx eas build --platform android --profile preview
+```
+
+## Environment variables
+
+Secrets are **not** stored in this repository.
+
+| File | In Git? | Purpose |
+|------|---------|---------|
+| `.env` | No (`.gitignore`) | Local web secrets |
+| `.env.example` | Yes | Template with **empty** placeholders |
+| `mobile/.env.local` | No | Local mobile secrets |
+| `mobile/.env.example` | Yes | Mobile template (`pk_test_xxx` placeholders only) |
+
+Copy `.env.example` → `.env` and `mobile/.env.example` → `mobile/.env.local`, then add your own keys from Clerk, MongoDB, Stripe, and other dashboards.
+
+**Do not commit** `.env`, `.env.local`, API secret keys, webhook secrets, or database connection strings.
+
+Clerk **publishable** keys (`pk_test_…` / `pk_live_…`) may appear in client config (e.g. `eas.json`) — that is expected; **secret** keys (`sk_…`, `whsec_…`, `MONGODB_URL`, `OPENAI_API_KEY`) must stay in `.env` only.
+
+## Useful scripts
+
+```bash
+npm run seed:edupanda        # Seed demo EduPanda data
+npm run seed:mobile-catalog  # Seed mobile catalog data
+```
+
+## Deployment
+
+- **Web:** Vercel (connect repo, add env vars from `.env.example`)
+- **Mobile:** EAS Build (`mobile/eas.json`) → APK / AAB
+- **Database:** MongoDB Atlas or self-hosted
+
+See `DEPLOY_GUIDE.md` and `HANDOFF.md` for more detail.
+
+## License
+
+Private / educational project. Check with the repository owner before reuse.
