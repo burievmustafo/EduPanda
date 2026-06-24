@@ -1,12 +1,10 @@
-<h1 align="center" id="title">NextGen Learning Platform: A Udemy Clone Revolutionizing Online Education</h1>
+<h1 align="center" id="title">NextGen Learning Platform:  Online Education</h1>
 
 <p align="center"><img src="https://media.graphassets.com/cPlC13OsTaCHl8ytfxht" alt="project-image"></p>
 
-<p id="description">Embark on a transformative journey in online education with our pioneering project a Udemy clone designed to redefine the e-learning landscape. Leveraging cutting-edge technologies and a suite of professional features our platform empowers users to engage learn and grow like never before.</p>
+<p id="description">Embark on a transformative journey in online education with our pioneering project e-learning landscape. Leveraging cutting-edge technologies and a suite of professional features our platform empowers users to engage learn and grow like never before.</p>
 
-<h2>🚀 Demo</h2>
 
-[https://www.sammi-praktikum.uz](https://www.sammi-praktikum.uz)
 
 <h2>🧐 Features</h2>
 
@@ -14,7 +12,7 @@ Here're some of the project's best features:
 
 - Clerk for Seamless User Authentication and Management: With Clerk we ensure secure and effortless user authentication and management fostering a smooth learning experience for our users.
 - Stripe for Robust Payment Solutions and Customer Management: Integrated with Stripe our platform offers seamless payment processing allowing users to manage their cards and apply coupons effortlessly enhancing their purchasing experience.
-- I18next for Multilingual Localization: Embracing diversity our project supports localization in four languages: Turkish Russian Uzbek and English enabling learners worldwide to access content in their preferred language.
+- I18next for Multilingual Localization: Embracing diversity our project supports localization in four languages: Japanese and English enabling learners worldwide to access content in their preferred language.
 - ShadcnUI for Intuitive UI Components and Dynamic Themes: ShadcnUI empowers us to deliver an immersive learning environment with intuitive UI components and dynamic themes including both dark and light modes ensuring optimal user experience across devices.
 - MongoDB for Robust Database Management: Backed by MongoDB our platform ensures reliable and scalable data storage facilitating seamless content delivery and user interaction.
 - OpenAI Integration for Enhanced Learning Capabilities: By integrating OpenAI we introduce advanced features such as conversation simulation code generation and image generation enriching the learning experience with AI-driven insights and creativity.
@@ -25,12 +23,6 @@ Here're some of the project's best features:
 - Progress Tracking and Analytics: Empower users to track their progress monitor learning milestones and gain valuable insights through comprehensive analytics and progress tracking tools.
 
 <h2>🛠️ Installation Steps:</h2>
-
-<p>1. Clone project</p>
-
-```
-git clone https://github.com/samarbadriddin0v/startup.sammi.ac
-```
 
 <p>2. Install packages</p>
 
