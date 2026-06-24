@@ -129,8 +129,6 @@ npm run seed:mobile-catalog  # Seed mobile catalog data
 - **Mobile:** EAS Build (`mobile/eas.json`) → APK / AAB
 - **Database:** MongoDB Atlas or self-hosted
 
-See `DEPLOY_GUIDE.md` and `HANDOFF.md` for more detail.
-
 ## License
 
 Private / educational project. Check with the repository owner before reuse.
